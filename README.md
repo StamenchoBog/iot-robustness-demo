@@ -34,11 +34,11 @@ python -m simulation.static_simulation
 python -m simulation.dynamic_simulation
 ```
 
-This will generate the results CSV at the path set in config.py (default: static_analysis_Xn_Yr.csv).
+Note: This will generate the results CSV at the path set in config.py (default: static_analysis_Xn_Yr.csv).
 
 ### Plot results
 
-Available metrics in the results CSV: lcc, algebraic_connectivity, smoothness.
+Available metrics in the results CSV: `lcc`, `algebraic_connectivity`, `smoothness`.
 
 ```shell
 # Show plot interactively (default metric: lcc)
@@ -51,7 +51,6 @@ python -m plots.plot_results --metric smoothness --save --output static_analysis
 ```
 
 Notes:
-- The plotting script reads the CSV path from `config.STATIC_SIMULATION_CONFIG['results_filename']`.
 - When using `--save`, files are written into the plots/ directory automatically.
 
 ### Generate graph visualizations
