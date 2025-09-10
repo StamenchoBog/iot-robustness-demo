@@ -51,8 +51,8 @@ python -m plots.plot_results --metric smoothness --save --output static_analysis
 ```
 
 Notes:
-- The plotting script reads the CSV path from config.STATIC_SIMULATION_CONFIG['results_filename'].
-- When using --save, files are written into the plots/ directory automatically.
+- The plotting script reads the CSV path from `config.STATIC_SIMULATION_CONFIG['results_filename']`.
+- When using `--save`, files are written into the plots/ directory automatically.
 
 ### Generate graph visualizations
 
