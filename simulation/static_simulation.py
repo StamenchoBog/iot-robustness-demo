@@ -3,7 +3,7 @@ from tqdm import tqdm
 from typing import Dict, Any
 
 from config import STATIC_SIMULATION_CONFIG
-from model_generator.model import generate_network
+from models.model_generator import generate_network
 from analysis.static_graph_models_analysis import simulate_attack
 
 class SimulationRunner:

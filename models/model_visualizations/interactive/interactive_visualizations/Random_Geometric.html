@@ -1,0 +1,459 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script>function neighbourhoodHighlight(params) {
+  // console.log("in nieghbourhoodhighlight");
+  allNodes = nodes.get({ returnType: "Object" });
+  // originalNodes = JSON.parse(JSON.stringify(allNodes));
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    highlightActive = true;
+    var i, j;
+    var selectedNode = params.nodes[0];
+    var degrees = 2;
+
+    // mark all nodes as hard to read.
+    for (let nodeId in allNodes) {
+      // nodeColors[nodeId] = allNodes[nodeId].color;
+      allNodes[nodeId].color = "rgba(200,200,200,0.5)";
+      if (allNodes[nodeId].hiddenLabel === undefined) {
+        allNodes[nodeId].hiddenLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+    var connectedNodes = network.getConnectedNodes(selectedNode);
+    var allConnectedNodes = [];
+
+    // get the second degree nodes
+    for (i = 1; i < degrees; i++) {
+      for (j = 0; j < connectedNodes.length; j++) {
+        allConnectedNodes = allConnectedNodes.concat(
+          network.getConnectedNodes(connectedNodes[j])
+        );
+      }
+    }
+
+    // all second degree nodes get a different color and their label back
+    for (i = 0; i < allConnectedNodes.length; i++) {
+      // allNodes[allConnectedNodes[i]].color = "pink";
+      allNodes[allConnectedNodes[i]].color = "rgba(150,150,150,0.75)";
+      if (allNodes[allConnectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[allConnectedNodes[i]].label =
+          allNodes[allConnectedNodes[i]].hiddenLabel;
+        allNodes[allConnectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // all first degree nodes get their own color and their label back
+    for (i = 0; i < connectedNodes.length; i++) {
+      // allNodes[connectedNodes[i]].color = undefined;
+      allNodes[connectedNodes[i]].color = nodeColors[connectedNodes[i]];
+      if (allNodes[connectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[connectedNodes[i]].label =
+          allNodes[connectedNodes[i]].hiddenLabel;
+        allNodes[connectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // the main node gets its own color and its label back.
+    // allNodes[selectedNode].color = undefined;
+    allNodes[selectedNode].color = nodeColors[selectedNode];
+    if (allNodes[selectedNode].hiddenLabel !== undefined) {
+      allNodes[selectedNode].label = allNodes[selectedNode].hiddenLabel;
+      allNodes[selectedNode].hiddenLabel = undefined;
+    }
+  } else if (highlightActive === true) {
+    // console.log("highlightActive was true");
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      // allNodes[nodeId].color = "purple";
+      allNodes[nodeId].color = nodeColors[nodeId];
+      // delete allNodes[nodeId].color;
+      if (allNodes[nodeId].hiddenLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].hiddenLabel;
+        allNodes[nodeId].hiddenLabel = undefined;
+      }
+    }
+    highlightActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    // console.log("Nothing was selected");
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        // allNodes[nodeId].color = {};
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function filterHighlight(params) {
+  allNodes = nodes.get({ returnType: "Object" });
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    filterActive = true;
+    let selectedNodes = params.nodes;
+
+    // hiding all nodes and saving the label
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = true;
+      if (allNodes[nodeId].savedLabel === undefined) {
+        allNodes[nodeId].savedLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+
+    for (let i=0; i < selectedNodes.length; i++) {
+      allNodes[selectedNodes[i]].hidden = false;
+      if (allNodes[selectedNodes[i]].savedLabel !== undefined) {
+        allNodes[selectedNodes[i]].label = allNodes[selectedNodes[i]].savedLabel;
+        allNodes[selectedNodes[i]].savedLabel = undefined;
+      }
+    }
+
+  } else if (filterActive === true) {
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = false;
+      if (allNodes[nodeId].savedLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].savedLabel;
+        allNodes[nodeId].savedLabel = undefined;
+      }
+    }
+    filterActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function selectNode(nodes) {
+  network.selectNodes(nodes);
+  neighbourhoodHighlight({ nodes: nodes });
+  return nodes;
+}
+
+function selectNodes(nodes) {
+  network.selectNodes(nodes);
+  filterHighlight({nodes: nodes});
+  return nodes;
+}
+
+function highlightFilter(filter) {
+  let selectedNodes = []
+  let selectedProp = filter['property']
+  if (filter['item'] === 'node') {
+    let allNodes = nodes.get({ returnType: "Object" });
+    for (let nodeId in allNodes) {
+      if (allNodes[nodeId][selectedProp] && filter['value'].includes((allNodes[nodeId][selectedProp]).toString())) {
+        selectedNodes.push(nodeId)
+      }
+    }
+  }
+  else if (filter['item'] === 'edge'){
+    let allEdges = edges.get({returnType: 'object'});
+    // check if the selected property exists for selected edge and select the nodes connected to the edge
+    for (let edge in allEdges) {
+      if (allEdges[edge][selectedProp] && filter['value'].includes((allEdges[edge][selectedProp]).toString())) {
+        selectedNodes.push(allEdges[edge]['from'])
+        selectedNodes.push(allEdges[edge]['to'])
+      }
+    }
+  }
+  selectNodes(selectedNodes)
+}</script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+            
+            
+            
+            
+            
+
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 800px;
+                 background-color: #ffffff;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+             #loadingBar {
+                 position:absolute;
+                 top:0px;
+                 left:0px;
+                 width: 100%;
+                 height: 800px;
+                 background-color:rgba(200,200,200,0.8);
+                 -webkit-transition: all 0.5s ease;
+                 -moz-transition: all 0.5s ease;
+                 -ms-transition: all 0.5s ease;
+                 -o-transition: all 0.5s ease;
+                 transition: all 0.5s ease;
+                 opacity:1;
+             }
+
+             #bar {
+                 position:absolute;
+                 top:0px;
+                 left:0px;
+                 width:20px;
+                 height:20px;
+                 margin:auto auto auto auto;
+                 border-radius:11px;
+                 border:2px solid rgba(30,30,30,0.05);
+                 background: rgb(0, 173, 246); /* Old browsers */
+                 box-shadow: 2px 0px 4px rgba(0,0,0,0.4);
+             }
+
+             #border {
+                 position:absolute;
+                 top:10px;
+                 left:10px;
+                 width:500px;
+                 height:23px;
+                 margin:auto auto auto auto;
+                 box-shadow: 0px 0px 4px rgba(0,0,0,0.2);
+                 border-radius:10px;
+             }
+
+             #text {
+                 position:absolute;
+                 top:8px;
+                 left:530px;
+                 width:30px;
+                 height:50px;
+                 margin:auto auto auto auto;
+                 font-size:22px;
+                 color: #000000;
+             }
+
+             div.outerBorder {
+                 position:relative;
+                 top:400px;
+                 width:600px;
+                 height:44px;
+                 margin:auto auto auto auto;
+                 border:8px solid rgba(0,0,0,0.1);
+                 background: rgb(252,252,252); /* Old browsers */
+                 background: -moz-linear-gradient(top,  rgba(252,252,252,1) 0%, rgba(237,237,237,1) 100%); /* FF3.6+ */
+                 background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(252,252,252,1)), color-stop(100%,rgba(237,237,237,1))); /* Chrome,Safari4+ */
+                 background: -webkit-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* Chrome10+,Safari5.1+ */
+                 background: -o-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* Opera 11.10+ */
+                 background: -ms-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* IE10+ */
+                 background: linear-gradient(to bottom,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* W3C */
+                 filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fcfcfc', endColorstr='#ededed',GradientType=0 ); /* IE6-9 */
+                 border-radius:72px;
+                 box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+             }
+             
+
+             
+             #config {
+                 float: left;
+                 width: 400px;
+                 height: 600px;
+             }
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+            <div id="loadingBar">
+              <div class="outerBorder">
+                <div id="text">0%</div>
+                <div id="border">
+                  <div id="bar"></div>
+                </div>
+              </div>
+            </div>
+        
+        
+            <div id="config"></div>
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#97c2fc", "id": 0, "label": 0, "pos": [0.5042105035556579, 0.5730409372792304], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 5, "label": 5, "pos": [0.5512886279987783, 0.5682495280713251], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 38, "label": 38, "pos": [0.47873298587315627, 0.5669482264667858], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 49, "label": 49, "pos": [0.5740840060311403, 0.5559108026045588], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 126, "label": 126, "pos": [0.45732132591525687, 0.5785517586878949], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 132, "label": 132, "pos": [0.4523946377110504, 0.5541720879778683], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 150, "label": 150, "pos": [0.5190460753772514, 0.5300476977015908], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 1, "label": 1, "pos": [0.3271015005997764, 0.5068084406109231], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 35, "label": 35, "pos": [0.26603344732786804, 0.5171910042399633], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 172, "label": 172, "pos": [0.3220407061179349, 0.5072305798792863], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 196, "label": 196, "pos": [0.3069775198805802, 0.5221936183488999], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 2, "label": 2, "pos": [0.8417460571206565, 0.5557359107956137], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 44, "label": 44, "pos": [0.77409488494103, 0.5280979796039525], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 106, "label": 106, "pos": [0.8131285112486626, 0.49178383645849355], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 116, "label": 116, "pos": [0.8021010150661728, 0.5606194988688307], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 120, "label": 120, "pos": [0.7778197161423331, 0.5176444704569461], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 3, "label": 3, "pos": [0.36704396455083754, 0.6242198315542489], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 8, "label": 8, "pos": [0.3585711939632674, 0.6012860374351434], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 61, "label": 61, "pos": [0.3768561867295185, 0.6476335934151634], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 140, "label": 140, "pos": [0.4107519965142069, 0.6235021399837324], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 170, "label": 170, "pos": [0.37802291327875204, 0.6878887530578174], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 194, "label": 194, "pos": [0.33988618320736996, 0.6757390197905113], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 4, "label": 4, "pos": [0.2066153807743225, 0.8878278091332441], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 159, "label": 159, "pos": [0.164687534326722, 0.879327343564739], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 40, "label": 40, "pos": [0.5922336266373279, 0.6173348397752689], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 94, "label": 94, "pos": [0.6088695489850574, 0.6157042069641141], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 188, "label": 188, "pos": [0.5813007509826754, 0.6327327915728737], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 6, "label": 6, "pos": [0.121109992344276, 0.33573085803819325], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 11, "label": 11, "pos": [0.08194391635564402, 0.3180907711585904], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 18, "label": 18, "pos": [0.12441781757743176, 0.3114408512447341], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 21, "label": 21, "pos": [0.10722334683550916, 0.3443890597791015], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 134, "label": 134, "pos": [0.12359621468450388, 0.4009391341019224], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 171, "label": 171, "pos": [0.07650200358919834, 0.28912881120707], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 7, "label": 7, "pos": [0.1430055852846892, 0.7410952961522611], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 28, "label": 28, "pos": [0.0932768165008887, 0.734995954574551], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 46, "label": 46, "pos": [0.125233571442935, 0.688060863817561], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 52, "label": 52, "pos": [0.08329311613795376, 0.7283848952150535], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 99, "label": 99, "pos": [0.15079472393427007, 0.7422499271366474], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 9, "label": 9, "pos": [0.714162322277217, 0.4182822889143839], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 58, "label": 58, "pos": [0.6786203089107056, 0.4297269998312965], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 62, "label": 62, "pos": [0.7245465308920789, 0.42921819834541397], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 105, "label": 105, "pos": [0.7193070025780215, 0.41736465611900275], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 115, "label": 115, "pos": [0.6456141966547165, 0.39551839951101975], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 10, "label": 10, "pos": [0.7245917633445866, 0.0425661227517945], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 86, "label": 86, "pos": [0.7208601125760999, 0.10670340348515173], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 96, "label": 96, "pos": [0.7859887613991384, 0.040846812575284885], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 127, "label": 127, "pos": [0.054182970244970874, 0.38494954278949767], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 12, "label": 12, "pos": [0.5880898012424196, 0.12527486500060347], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 43, "label": 43, "pos": [0.6244008114005495, 0.16838780149507937], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 68, "label": 68, "pos": [0.6260300273266101, 0.14094738392754302], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 69, "label": 69, "pos": [0.629307583823346, 0.1872839297944605], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 73, "label": 73, "pos": [0.6108088224070575, 0.1841302461008254], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 144, "label": 144, "pos": [0.5920902072720623, 0.06045268778233137], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 162, "label": 162, "pos": [0.5899276303292165, 0.18481488469432172], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 164, "label": 164, "pos": [0.6110151108841775, 0.0852121367535632], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 13, "label": 13, "pos": [0.07294005726599251, 0.07416838920470681], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 87, "label": 87, "pos": [0.05911198509899396, 0.053995004043766004], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 117, "label": 117, "pos": [0.042492935200328597, 0.10677818910227976], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 166, "label": 166, "pos": [0.08545121796495969, 0.00939591879362034], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 15, "label": 15, "pos": [0.026592074889674522, 0.18115742302709748], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 91, "label": 91, "pos": [0.038537853938597766, 0.24674736306646072], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 16, "label": 16, "pos": [0.5643074746224911, 0.2248203664028141], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 66, "label": 66, "pos": [0.5804388554459725, 0.20265182445114482], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 158, "label": 158, "pos": [0.5120639765266989, 0.17328406282843745], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 17, "label": 17, "pos": [0.9229000961106124, 0.19090588302316913], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 65, "label": 65, "pos": [0.9393457183544164, 0.12852432348456488], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 163, "label": 163, "pos": [0.9606143413041475, 0.1661267123682435], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 181, "label": 181, "pos": [0.8504106608942953, 0.19358242882612064], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 19, "label": 19, "pos": [0.4460887499989129, 0.6765661227051851], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 20, "label": 20, "pos": [0.9223685029602223, 0.7080965490757398], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 26, "label": 26, "pos": [0.870156887375926, 0.713943342442883], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 29, "label": 29, "pos": [0.9540106355636289, 0.7277769878512386], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 56, "label": 56, "pos": [0.8826660823067638, 0.7158369865323221], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 67, "label": 67, "pos": [0.9409453356000003, 0.6906106314920797], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 179, "label": 179, "pos": [0.9562002279701329, 0.6637049174864145], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 22, "label": 22, "pos": [0.02443812399050982, 0.4114485759333085], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 23, "label": 23, "pos": [0.3960912222345515, 0.38738924897022153], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 30, "label": 30, "pos": [0.4320848889866231, 0.4263369895336113], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 59, "label": 59, "pos": [0.432832503821452, 0.43606711160956135], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 195, "label": 195, "pos": [0.43478048462386887, 0.4055526755217881], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 24, "label": 24, "pos": [0.627298867096049, 0.29374678826553213], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 113, "label": 113, "pos": [0.6786965760228769, 0.3334291406548804], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 25, "label": 25, "pos": [0.22105255945942026, 0.5785135120269749], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 93, "label": 93, "pos": [0.24822248875356512, 0.6104954253084801], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 114, "label": 114, "pos": [0.22500786022589903, 0.5974259291533621], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 89, "label": 89, "pos": [0.8353154044242637, 0.6524321720501147], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 147, "label": 147, "pos": [0.8112184022472518, 0.7321086548459617], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 27, "label": 27, "pos": [0.34015279859074, 0.3231241601474728], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 37, "label": 37, "pos": [0.37071803392453584, 0.2923034913005197], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 154, "label": 154, "pos": [0.3215498925247552, 0.2771371313951264], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 39, "label": 39, "pos": [0.11230166897481242, 0.6686521669722048], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 169, "label": 169, "pos": [0.05856530245545044, 0.732236116217544], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 101, "label": 101, "pos": [0.49492674590600627, 0.45146442474749615], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 168, "label": 168, "pos": [0.4299083894190464, 0.46977923046065095], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 31, "label": 31, "pos": [0.5560441414168718, 0.4775702572528544], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 41, "label": 41, "pos": [0.5508436145028316, 0.42132868253061617], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 53, "label": 53, "pos": [0.6161643099213969, 0.4838457864535015], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 104, "label": 104, "pos": [0.6168489543296501, 0.49351646416835204], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 139, "label": 139, "pos": [0.6144637908163207, 0.5070897729438184], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 32, "label": 32, "pos": [0.08105934335804799, 0.949245108099251], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 33, "label": 33, "pos": [0.029719967224174804, 0.9410279655264946], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 100, "label": 100, "pos": [0.04716190110630747, 0.9301687233896726], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 136, "label": 136, "pos": [0.053947518479087186, 0.9800199739730908], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 197, "label": 197, "pos": [0.022051119233208683, 0.8908148297212354], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 34, "label": 34, "pos": [0.2638647744613192, 0.0253819147002029], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 45, "label": 45, "pos": [0.23058978733958146, 0.02365642629619702], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 141, "label": 141, "pos": [0.22713230837679965, 0.4815932651725323], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 153, "label": 153, "pos": [0.251595720909379, 0.45581155384246674], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 36, "label": 36, "pos": [0.17454490077880958, 0.029374842262862355], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 47, "label": 47, "pos": [0.16107777914759458, 0.0045545658000817335], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 124, "label": 124, "pos": [0.3893891585775683, 0.22934351039115664], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 110, "label": 110, "pos": [0.1754861813905626, 0.6670673535360031], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 186, "label": 186, "pos": [0.07195832934346846, 0.6072156720619314], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 80, "label": 80, "pos": [0.6131864867517165, 0.6490963753536515], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 133, "label": 133, "pos": [0.6494994998473477, 0.6637284289240686], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 42, "label": 42, "pos": [0.8493044477299345, 0.07564123273894674], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 185, "label": 185, "pos": [0.8291626094546878, 0.1149599674470827], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 57, "label": 57, "pos": [0.6740117759488821, 0.17595449509927152], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 77, "label": 77, "pos": [0.6488138844897628, 0.21404946590522267], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 103, "label": 103, "pos": [0.7191702859834476, 0.5394368545821784], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 48, "label": 48, "pos": [0.8182787334765759, 0.6492747788047007], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 50, "label": 50, "pos": [0.2833136663353688, 0.7505756070451102], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 88, "label": 88, "pos": [0.25887184326581214, 0.7796329983707209], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 121, "label": 121, "pos": [0.2837253816341486, 0.8101930923561802], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 192, "label": 192, "pos": [0.3109755267354247, 0.696455356147049], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 51, "label": 51, "pos": [0.4433457562954174, 0.9152156161731688], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 84, "label": 84, "pos": [0.4281100098676971, 0.9660744071998927], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 190, "label": 190, "pos": [0.6515292139234046, 0.5276552948762518], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 54, "label": 54, "pos": [0.34704729922359023, 0.1394660364385074], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 98, "label": 98, "pos": [0.34064673776597476, 0.16926352904884168], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 191, "label": 191, "pos": [0.3684242699871002, 0.12956120507225366], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 55, "label": 55, "pos": [0.7291206724910632, 0.6579820367459067], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 198, "label": 198, "pos": [0.716490100094847, 0.6769072876179477], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 85, "label": 85, "pos": [0.7353946590409576, 0.1515026343957966], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 130, "label": 130, "pos": [0.7076189823251796, 0.23326734865126741], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 151, "label": 151, "pos": [0.7079385902499495, 0.24145285730624388], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 184, "label": 184, "pos": [0.6289552516184759, 0.3824329265699157], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 60, "label": 60, "pos": [0.8394307340380143, 0.3737833306942584], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 177, "label": 177, "pos": [0.8134712128966165, 0.3205629558277582], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 63, "label": 63, "pos": [0.46183949013490266, 0.795186048949596], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 149, "label": 149, "pos": [0.4760162445463606, 0.8155940355760772], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 64, "label": 64, "pos": [0.5486963552998597, 0.8385148876568211], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 135, "label": 135, "pos": [0.5367831548402324, 0.9064483612856179], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 157, "label": 157, "pos": [0.9539304017212813, 0.6336213121699176], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 70, "label": 70, "pos": [0.9715612647733274, 0.8275380809046894], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 72, "label": 72, "pos": [0.9338246472320175, 0.8251071219484785], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 148, "label": 148, "pos": [0.9654101501942354, 0.8978698901913956], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 193, "label": 193, "pos": [0.9975992934642538, 0.8669923055457049], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 71, "label": 71, "pos": [0.20114648270377145, 0.477569910117277], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 155, "label": 155, "pos": [0.21081756960314246, 0.4117647831094049], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 175, "label": 175, "pos": [0.2313592055538254, 0.4114268157591092], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 160, "label": 160, "pos": [0.900110274045001, 0.7931867774204902], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 173, "label": 173, "pos": [0.9057408651769718, 0.8936967445099194], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 74, "label": 74, "pos": [0.2145288715831033, 0.19877533491966737], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 156, "label": 156, "pos": [0.2047179597790073, 0.2438113480133679], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 75, "label": 75, "pos": [0.4757364553245166, 0.9965934731273646], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 76, "label": 76, "pos": [0.03408680989067703, 0.7864477951872214], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 90, "label": 90, "pos": [0.0037855652658321803, 0.7849702680065597], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 143, "label": 143, "pos": [0.00043631304495383993, 0.8026748926177312], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 78, "label": 78, "pos": [0.22491785288866684, 0.322682920765228], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 152, "label": 152, "pos": [0.2557910796765057, 0.27910502120876346], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 79, "label": 79, "pos": [0.36290973004747973, 0.9404548277759677], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 174, "label": 174, "pos": [0.34980354688125015, 0.955555850777431], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 81, "label": 81, "pos": [0.6627891928764708, 0.7239510174618858], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 83, "label": 83, "pos": [0.6411713114096039, 0.7270543578343345], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 137, "label": 137, "pos": [0.7445416727128837, 0.1374739982086478], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 189, "label": 189, "pos": [0.7524579628567607, 0.19262410027418986], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 125, "label": 125, "pos": [0.2353258550513485, 0.6805579318021622], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 95, "label": 95, "pos": [0.7221929451294595, 0.9105223444623399], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 97, "label": 97, "pos": [0.6990760588906823, 0.9386023874775056], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 180, "label": 180, "pos": [0.7083940132538841, 0.8949961292352906], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 102, "label": 102, "pos": [0.6397809549788733, 0.9606962246870644], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 111, "label": 111, "pos": [0.6737871586071588, 0.9784371609131098], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 138, "label": 138, "pos": [0.5994691228340517, 0.9916841028960943], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 107, "label": 107, "pos": [0.8462551793224787, 0.9947904565107034], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 182, "label": 182, "pos": [0.8621420343099095, 0.9867920750193224], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 199, "label": 199, "pos": [0.7945570290904369, 0.9592982810627071], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 108, "label": 108, "pos": [0.28363378294182107, 0.951872278202075], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 146, "label": 146, "pos": [0.2838095740496227, 0.9311230860753399], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 109, "label": 109, "pos": [0.100756482604616, 0.44818564593924715], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 129, "label": 129, "pos": [0.0822320773004338, 0.504895427229275], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 112, "label": 112, "pos": [0.5552885121958839, 0.6979032564980397], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 118, "label": 118, "pos": [0.8222266603057261, 0.24504148928379943], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 187, "label": 187, "pos": [0.8563535870240282, 0.22861097511633743], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 119, "label": 119, "pos": [0.3025654178157766, 0.241425674638982], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 122, "label": 122, "pos": [0.069771234585713, 0.5397859740402887], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 123, "label": 123, "pos": [0.4225428440030845, 0.20134412762121823], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 165, "label": 165, "pos": [0.7427868613705609, 0.2680654140637365], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 131, "label": 131, "pos": [0.009700355349651746, 0.6890723974170534], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 176, "label": 176, "pos": [0.0022283799916795743, 0.6283093526639031], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 142, "label": 142, "pos": [0.9964986378278426, 0.5606368902525988], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 145, "label": 145, "pos": [0.9400343162416414, 0.5566772032199641], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 167, "label": 167, "pos": [0.4897903393230493, 0.09113535895972102], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 178, "label": 178, "pos": [0.5167732734487571, 0.08293009980450683], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 14, "label": 14, "pos": [0.4650759822337531, 0.015818932518374185], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 82, "label": 82, "pos": [0.7582883614387326, 0.7858419375040214], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 92, "label": 92, "pos": [0.1359351131021982, 0.20783180345540486], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 128, "label": 128, "pos": [0.36664275783472233, 0.8101097396175048], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 161, "label": 161, "pos": [0.10923596721309092, 0.8214204282744868], "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": 183, "label": 183, "pos": [0.6345200240563635, 0.8702283643054142], "shape": "dot", "size": 10}]);
+                  edges = new vis.DataSet([{"from": 0, "to": 5, "width": 1}, {"from": 0, "to": 38, "width": 1}, {"from": 0, "to": 49, "width": 1}, {"from": 0, "to": 126, "width": 1}, {"from": 0, "to": 132, "width": 1}, {"from": 0, "to": 150, "width": 1}, {"from": 1, "to": 35, "width": 1}, {"from": 1, "to": 172, "width": 1}, {"from": 1, "to": 196, "width": 1}, {"from": 2, "to": 44, "width": 1}, {"from": 2, "to": 106, "width": 1}, {"from": 2, "to": 116, "width": 1}, {"from": 2, "to": 120, "width": 1}, {"from": 3, "to": 8, "width": 1}, {"from": 3, "to": 61, "width": 1}, {"from": 3, "to": 140, "width": 1}, {"from": 3, "to": 170, "width": 1}, {"from": 3, "to": 194, "width": 1}, {"from": 4, "to": 159, "width": 1}, {"from": 5, "to": 38, "width": 1}, {"from": 5, "to": 40, "width": 1}, {"from": 5, "to": 49, "width": 1}, {"from": 5, "to": 94, "width": 1}, {"from": 5, "to": 150, "width": 1}, {"from": 5, "to": 188, "width": 1}, {"from": 6, "to": 11, "width": 1}, {"from": 6, "to": 18, "width": 1}, {"from": 6, "to": 21, "width": 1}, {"from": 6, "to": 134, "width": 1}, {"from": 6, "to": 171, "width": 1}, {"from": 7, "to": 28, "width": 1}, {"from": 7, "to": 46, "width": 1}, {"from": 7, "to": 52, "width": 1}, {"from": 7, "to": 99, "width": 1}, {"from": 8, "to": 61, "width": 1}, {"from": 8, "to": 140, "width": 1}, {"from": 9, "to": 58, "width": 1}, {"from": 9, "to": 62, "width": 1}, {"from": 9, "to": 105, "width": 1}, {"from": 9, "to": 115, "width": 1}, {"from": 10, "to": 86, "width": 1}, {"from": 10, "to": 96, "width": 1}, {"from": 11, "to": 18, "width": 1}, {"from": 11, "to": 21, "width": 1}, {"from": 11, "to": 127, "width": 1}, {"from": 11, "to": 171, "width": 1}, {"from": 12, "to": 43, "width": 1}, {"from": 12, "to": 68, "width": 1}, {"from": 12, "to": 69, "width": 1}, {"from": 12, "to": 73, "width": 1}, {"from": 12, "to": 144, "width": 1}, {"from": 12, "to": 162, "width": 1}, {"from": 12, "to": 164, "width": 1}, {"from": 13, "to": 87, "width": 1}, {"from": 13, "to": 117, "width": 1}, {"from": 13, "to": 166, "width": 1}, {"from": 15, "to": 91, "width": 1}, {"from": 16, "to": 66, "width": 1}, {"from": 16, "to": 73, "width": 1}, {"from": 16, "to": 158, "width": 1}, {"from": 16, "to": 162, "width": 1}, {"from": 17, "to": 65, "width": 1}, {"from": 17, "to": 163, "width": 1}, {"from": 17, "to": 181, "width": 1}, {"from": 18, "to": 21, "width": 1}, {"from": 18, "to": 171, "width": 1}, {"from": 19, "to": 140, "width": 1}, {"from": 19, "to": 170, "width": 1}, {"from": 20, "to": 26, "width": 1}, {"from": 20, "to": 29, "width": 1}, {"from": 20, "to": 56, "width": 1}, {"from": 20, "to": 67, "width": 1}, {"from": 20, "to": 179, "width": 1}, {"from": 21, "to": 127, "width": 1}, {"from": 21, "to": 134, "width": 1}, {"from": 21, "to": 171, "width": 1}, {"from": 22, "to": 127, "width": 1}, {"from": 23, "to": 30, "width": 1}, {"from": 23, "to": 59, "width": 1}, {"from": 23, "to": 195, "width": 1}, {"from": 24, "to": 113, "width": 1}, {"from": 25, "to": 93, "width": 1}, {"from": 25, "to": 114, "width": 1}, {"from": 26, "to": 56, "width": 1}, {"from": 26, "to": 67, "width": 1}, {"from": 26, "to": 89, "width": 1}, {"from": 26, "to": 147, "width": 1}, {"from": 27, "to": 37, "width": 1}, {"from": 27, "to": 154, "width": 1}, {"from": 28, "to": 39, "width": 1}, {"from": 28, "to": 46, "width": 1}, {"from": 28, "to": 52, "width": 1}, {"from": 28, "to": 99, "width": 1}, {"from": 28, "to": 169, "width": 1}, {"from": 29, "to": 56, "width": 1}, {"from": 29, "to": 67, "width": 1}, {"from": 29, "to": 179, "width": 1}, {"from": 30, "to": 59, "width": 1}, {"from": 30, "to": 101, "width": 1}, {"from": 30, "to": 168, "width": 1}, {"from": 30, "to": 195, "width": 1}, {"from": 31, "to": 41, "width": 1}, {"from": 31, "to": 53, "width": 1}, {"from": 31, "to": 101, "width": 1}, {"from": 31, "to": 104, "width": 1}, {"from": 31, "to": 139, "width": 1}, {"from": 31, "to": 150, "width": 1}, {"from": 32, "to": 33, "width": 1}, {"from": 32, "to": 100, "width": 1}, {"from": 32, "to": 136, "width": 1}, {"from": 33, "to": 100, "width": 1}, {"from": 33, "to": 136, "width": 1}, {"from": 33, "to": 197, "width": 1}, {"from": 34, "to": 45, "width": 1}, {"from": 35, "to": 141, "width": 1}, {"from": 35, "to": 153, "width": 1}, {"from": 35, "to": 172, "width": 1}, {"from": 35, "to": 196, "width": 1}, {"from": 36, "to": 45, "width": 1}, {"from": 36, "to": 47, "width": 1}, {"from": 37, "to": 124, "width": 1}, {"from": 37, "to": 154, "width": 1}, {"from": 38, "to": 126, "width": 1}, {"from": 38, "to": 132, "width": 1}, {"from": 38, "to": 150, "width": 1}, {"from": 39, "to": 46, "width": 1}, {"from": 39, "to": 52, "width": 1}, {"from": 39, "to": 110, "width": 1}, {"from": 39, "to": 186, "width": 1}, {"from": 40, "to": 49, "width": 1}, {"from": 40, "to": 80, "width": 1}, {"from": 40, "to": 94, "width": 1}, {"from": 40, "to": 133, "width": 1}, {"from": 40, "to": 188, "width": 1}, {"from": 41, "to": 101, "width": 1}, {"from": 42, "to": 96, "width": 1}, {"from": 42, "to": 185, "width": 1}, {"from": 43, "to": 57, "width": 1}, {"from": 43, "to": 66, "width": 1}, {"from": 43, "to": 68, "width": 1}, {"from": 43, "to": 69, "width": 1}, {"from": 43, "to": 73, "width": 1}, {"from": 43, "to": 77, "width": 1}, {"from": 43, "to": 162, "width": 1}, {"from": 44, "to": 103, "width": 1}, {"from": 44, "to": 106, "width": 1}, {"from": 44, "to": 116, "width": 1}, {"from": 44, "to": 120, "width": 1}, {"from": 45, "to": 47, "width": 1}, {"from": 46, "to": 52, "width": 1}, {"from": 46, "to": 99, "width": 1}, {"from": 46, "to": 110, "width": 1}, {"from": 48, "to": 89, "width": 1}, {"from": 49, "to": 94, "width": 1}, {"from": 49, "to": 139, "width": 1}, {"from": 49, "to": 150, "width": 1}, {"from": 50, "to": 88, "width": 1}, {"from": 50, "to": 121, "width": 1}, {"from": 50, "to": 192, "width": 1}, {"from": 51, "to": 84, "width": 1}, {"from": 52, "to": 99, "width": 1}, {"from": 52, "to": 169, "width": 1}, {"from": 53, "to": 104, "width": 1}, {"from": 53, "to": 139, "width": 1}, {"from": 53, "to": 190, "width": 1}, {"from": 54, "to": 98, "width": 1}, {"from": 54, "to": 191, "width": 1}, {"from": 55, "to": 198, "width": 1}, {"from": 56, "to": 67, "width": 1}, {"from": 56, "to": 147, "width": 1}, {"from": 57, "to": 68, "width": 1}, {"from": 57, "to": 69, "width": 1}, {"from": 57, "to": 73, "width": 1}, {"from": 57, "to": 77, "width": 1}, {"from": 57, "to": 85, "width": 1}, {"from": 57, "to": 130, "width": 1}, {"from": 57, "to": 151, "width": 1}, {"from": 58, "to": 62, "width": 1}, {"from": 58, "to": 105, "width": 1}, {"from": 58, "to": 115, "width": 1}, {"from": 58, "to": 184, "width": 1}, {"from": 59, "to": 101, "width": 1}, {"from": 59, "to": 168, "width": 1}, {"from": 59, "to": 195, "width": 1}, {"from": 60, "to": 177, "width": 1}, {"from": 61, "to": 140, "width": 1}, {"from": 61, "to": 170, "width": 1}, {"from": 61, "to": 194, "width": 1}, {"from": 62, "to": 105, "width": 1}, {"from": 63, "to": 149, "width": 1}, {"from": 64, "to": 135, "width": 1}, {"from": 65, "to": 163, "width": 1}, {"from": 66, "to": 69, "width": 1}, {"from": 66, "to": 73, "width": 1}, {"from": 66, "to": 77, "width": 1}, {"from": 66, "to": 158, "width": 1}, {"from": 66, "to": 162, "width": 1}, {"from": 67, "to": 157, "width": 1}, {"from": 67, "to": 179, "width": 1}, {"from": 68, "to": 69, "width": 1}, {"from": 68, "to": 73, "width": 1}, {"from": 68, "to": 162, "width": 1}, {"from": 68, "to": 164, "width": 1}, {"from": 69, "to": 73, "width": 1}, {"from": 69, "to": 77, "width": 1}, {"from": 69, "to": 162, "width": 1}, {"from": 70, "to": 72, "width": 1}, {"from": 70, "to": 148, "width": 1}, {"from": 70, "to": 193, "width": 1}, {"from": 71, "to": 141, "width": 1}, {"from": 71, "to": 153, "width": 1}, {"from": 71, "to": 155, "width": 1}, {"from": 71, "to": 175, "width": 1}, {"from": 72, "to": 160, "width": 1}, {"from": 72, "to": 173, "width": 1}, {"from": 73, "to": 77, "width": 1}, {"from": 73, "to": 162, "width": 1}, {"from": 74, "to": 156, "width": 1}, {"from": 75, "to": 84, "width": 1}, {"from": 76, "to": 90, "width": 1}, {"from": 76, "to": 143, "width": 1}, {"from": 76, "to": 169, "width": 1}, {"from": 77, "to": 130, "width": 1}, {"from": 77, "to": 151, "width": 1}, {"from": 77, "to": 162, "width": 1}, {"from": 78, "to": 152, "width": 1}, {"from": 79, "to": 84, "width": 1}, {"from": 79, "to": 174, "width": 1}, {"from": 80, "to": 94, "width": 1}, {"from": 80, "to": 133, "width": 1}, {"from": 80, "to": 188, "width": 1}, {"from": 81, "to": 83, "width": 1}, {"from": 81, "to": 133, "width": 1}, {"from": 81, "to": 198, "width": 1}, {"from": 83, "to": 133, "width": 1}, {"from": 85, "to": 86, "width": 1}, {"from": 85, "to": 137, "width": 1}, {"from": 85, "to": 189, "width": 1}, {"from": 86, "to": 137, "width": 1}, {"from": 87, "to": 117, "width": 1}, {"from": 87, "to": 166, "width": 1}, {"from": 88, "to": 121, "width": 1}, {"from": 90, "to": 143, "width": 1}, {"from": 91, "to": 171, "width": 1}, {"from": 93, "to": 114, "width": 1}, {"from": 93, "to": 125, "width": 1}, {"from": 94, "to": 133, "width": 1}, {"from": 94, "to": 188, "width": 1}, {"from": 95, "to": 97, "width": 1}, {"from": 95, "to": 180, "width": 1}, {"from": 97, "to": 102, "width": 1}, {"from": 97, "to": 111, "width": 1}, {"from": 97, "to": 180, "width": 1}, {"from": 98, "to": 191, "width": 1}, {"from": 100, "to": 136, "width": 1}, {"from": 100, "to": 197, "width": 1}, {"from": 101, "to": 168, "width": 1}, {"from": 102, "to": 111, "width": 1}, {"from": 102, "to": 138, "width": 1}, {"from": 103, "to": 120, "width": 1}, {"from": 103, "to": 190, "width": 1}, {"from": 104, "to": 139, "width": 1}, {"from": 104, "to": 190, "width": 1}, {"from": 106, "to": 116, "width": 1}, {"from": 106, "to": 120, "width": 1}, {"from": 107, "to": 182, "width": 1}, {"from": 107, "to": 199, "width": 1}, {"from": 108, "to": 146, "width": 1}, {"from": 108, "to": 174, "width": 1}, {"from": 109, "to": 129, "width": 1}, {"from": 109, "to": 134, "width": 1}, {"from": 110, "to": 125, "width": 1}, {"from": 112, "to": 188, "width": 1}, {"from": 113, "to": 115, "width": 1}, {"from": 113, "to": 184, "width": 1}, {"from": 115, "to": 184, "width": 1}, {"from": 116, "to": 120, "width": 1}, {"from": 118, "to": 181, "width": 1}, {"from": 118, "to": 187, "width": 1}, {"from": 119, "to": 152, "width": 1}, {"from": 119, "to": 154, "width": 1}, {"from": 122, "to": 129, "width": 1}, {"from": 122, "to": 186, "width": 1}, {"from": 123, "to": 124, "width": 1}, {"from": 126, "to": 132, "width": 1}, {"from": 126, "to": 140, "width": 1}, {"from": 127, "to": 134, "width": 1}, {"from": 130, "to": 151, "width": 1}, {"from": 130, "to": 165, "width": 1}, {"from": 130, "to": 189, "width": 1}, {"from": 131, "to": 169, "width": 1}, {"from": 131, "to": 176, "width": 1}, {"from": 132, "to": 150, "width": 1}, {"from": 133, "to": 188, "width": 1}, {"from": 133, "to": 198, "width": 1}, {"from": 137, "to": 189, "width": 1}, {"from": 139, "to": 190, "width": 1}, {"from": 140, "to": 170, "width": 1}, {"from": 141, "to": 153, "width": 1}, {"from": 141, "to": 155, "width": 1}, {"from": 141, "to": 175, "width": 1}, {"from": 142, "to": 145, "width": 1}, {"from": 144, "to": 164, "width": 1}, {"from": 146, "to": 174, "width": 1}, {"from": 148, "to": 173, "width": 1}, {"from": 148, "to": 193, "width": 1}, {"from": 151, "to": 165, "width": 1}, {"from": 151, "to": 189, "width": 1}, {"from": 152, "to": 154, "width": 1}, {"from": 152, "to": 156, "width": 1}, {"from": 153, "to": 155, "width": 1}, {"from": 153, "to": 175, "width": 1}, {"from": 155, "to": 175, "width": 1}, {"from": 157, "to": 179, "width": 1}, {"from": 167, "to": 178, "width": 1}, {"from": 168, "to": 195, "width": 1}, {"from": 170, "to": 192, "width": 1}, {"from": 170, "to": 194, "width": 1}, {"from": 172, "to": 196, "width": 1}, {"from": 176, "to": 186, "width": 1}, {"from": 181, "to": 187, "width": 1}, {"from": 182, "to": 199, "width": 1}, {"from": 192, "to": 194, "width": 1}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": true,
+        "filter": [
+            "physics"
+        ]
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+                  // if this network requires displaying the configure window,
+                  // put it in its div
+                  options.configure["container"] = document.getElementById("config");
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+                      network.on("stabilizationProgress", function(params) {
+                          document.getElementById('loadingBar').removeAttribute("style");
+                          var maxWidth = 496;
+                          var minWidth = 20;
+                          var widthFactor = params.iterations/params.total;
+                          var width = Math.max(minWidth,maxWidth * widthFactor);
+                          document.getElementById('bar').style.width = width + 'px';
+                          document.getElementById('text').innerHTML = Math.round(widthFactor*100) + '%';
+                      });
+                      network.once("stabilizationIterationsDone", function() {
+                          document.getElementById('text').innerHTML = '100%';
+                          document.getElementById('bar').style.width = '496px';
+                          document.getElementById('loadingBar').style.opacity = 0;
+                          // really clean the dom element
+                          setTimeout(function () {document.getElementById('loadingBar').style.display = 'none';}, 500);
+                      });
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>

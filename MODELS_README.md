@@ -15,7 +15,7 @@ When a new node joins the network, it's much more likely to connect to nodes tha
 
 #### Example of the model:
 
-<img src="plot/model_visualizations/pictures/Barabasi-Albert_model.png" width="450" height="450" />
+<img src="models/model_visualizations/pictures/Barabasi-Albert_model.png" width="450" height="450" />
 
 ### Watts-Strogatz (WS)
 
@@ -29,7 +29,7 @@ Most nodes are only connected to their immediate neighbors, but a few random lon
 
 #### Example of the model:
 
-<img src="plot/model_visualizations/pictures/Watts-Strogatz_model.png" width="450" height="450" />
+<img src="models/model_visualizations/pictures/Watts-Strogatz_model.png" width="450" height="450" />
 
 ### Erdős-Rényi (ER)
 
@@ -43,7 +43,7 @@ For every possible pair of nodes, flip a coin to decide if they should be connec
 
 #### Example of the model:
 
-<img src="plot/model_visualizations/pictures/Erdos-Renyi_model.png" width="450" height="450" />
+<img src="models/model_visualizations/pictures/Erdos-Renyi_model.png" width="450" height="450" />
 
 ### Random Geometric Graph (RGG)
 
@@ -58,7 +58,7 @@ A connection exists only if two nodes are within a certain communication radius 
 
 #### Example of the model:
 
-<img src="plot/model_visualizations/pictures/Random_Geometric_model.png" width="450" height="450" />
+<img src="models/model_visualizations/pictures/Random_Geometric_model.png" width="450" height="450" />
 
 ### Hierarchical Model
 
@@ -74,4 +74,4 @@ and a large number of 'sensor' nodes (Level 2). Each sensor reports only to its 
 
 #### Example of the model:
 
-<img src="plot/model_visualizations/pictures/Hierarchical_model.png" width="450" height="450" />
+<img src="models/model_visualizations/pictures/Hierarchical_model.png" width="450" height="450" />

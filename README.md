@@ -1,41 +1,65 @@
 # iot-robustness-demo
 
-Demonstrating various algorithm and their robustness in the IoT sector.
+Demonstrating various algorithms and their robustness in the IoT sector.
 
 ## Models
 
-In order to include a bigger scope of structures and networks, a couple of graph models were included. Details about them,
-and definition on them can be seen on the link below.
+To cover a broad set of structures and networks, several graph models are included. Details are here:
 
 - [Graph Models](MODELS_README.md/#static-graph-models)
-
-## 
 
 ## Local Development
 
 ### Install Requirements
 
 ```shell
-# To install the Python 3.13.7 and use it later on
+# Install the Python version from .tool-versions
 asdf install
 
 # Install required packages
 pip install -r requirements.txt
+```
 
-### Configure parameters in config.py ###
+Configure parameters in config.py as needed (node count, models, strategies, output filename).
 
-# Start the simulation
-python -m simulation.simulation
+### Run simulations
 
-# Generate plots
-## Without export as images
-python -m plot.plot_results
+Static analysis (recommended entry points):
 
-## With export as images
-python -m plot.plot_results --save
+```shell
+# Run the static simulation module directly
+python -m simulation.static_simulation
 
-## With export as images and predefined file name
-python -m plot.plot_results --metric smoothness --save --output static_analysis_lcc_comparison.png
-python -m plot.plot_results --metric algebraic_connectivity --save --output static_analysis_algebraic_connectivity_comparison.png
-python -m plot.plot_results --metric smoothness --save --output static_analysis_smoothness_comparison.pn
+# Run the dynamic simulation module directly
+python -m simulation.dynamic_simulation
+```
+
+This will generate the results CSV at the path set in config.py (default: static_analysis_Xn_Yr.csv).
+
+### Plot results
+
+Available metrics in the results CSV: lcc, algebraic_connectivity, smoothness.
+
+```shell
+# Show plot interactively (default metric: lcc)
+python -m plots.plot_results
+
+# Save plots to the plots/ directory (pass only a filename, not a path)
+python -m plots.plot_results --save --output static_analysis_lcc_comparison.png
+python -m plots.plot_results --metric algebraic_connectivity --save --output static_analysis_algebraic_connectivity_comparison.png
+python -m plots.plot_results --metric smoothness --save --output static_analysis_smoothness_comparison.png
+```
+
+Notes:
+- The plotting script reads the CSV path from config.STATIC_SIMULATION_CONFIG['results_filename'].
+- When using --save, files are written into the plots/ directory automatically.
+
+### Generate graph visualizations
+
+```shell
+# (Re-)generate graph pictures
+python -m models.model_visualizations.visualize_models
+
+# (Re-)generate interactive visualizations using pyvis
+python -m models.model_visualizations.interactive_visualizer
 ```
