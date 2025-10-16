@@ -1,76 +1,88 @@
+import os
+import random
+from typing import Dict, Any, List
 import pandas as pd
 from tqdm import tqdm
-from typing import Dict, Any
 
 from config import STATIC_SIMULATION_CONFIG
 from models.model_generator import generate_network
 from analysis.static_graph_models_analysis import simulate_attack
 
-class SimulationRunner:
-    """Encapsulates the logic for running the simulation suite."""
 
+class SimulationRunner:
     def __init__(self, config: Dict[str, Any]):
         self.config = config
-        self.results = []
+        self.flush_every = int(config.get('flush_every', 0))
+        self.random_seed_base = config.get('random_seed_base')
+        self.results_filename = config['results_filename']
+        self._rows: List[Dict[str, Any]] = []
+
+    def _seed(self, model_name: str, strategy: str, run_id: int) -> int | None:
+        if self.random_seed_base is None:
+            return None
+        seed = (self.random_seed_base
+                + run_id
+                + (hash((model_name, strategy)) & 0xFFFF))
+        random.seed(seed)
+        return seed
+
+    def _flush(self, force: bool = False):
+        if not self._rows:
+            return
+        if self.flush_every <= 0 and not force:
+            return
+        if not force and len(self._rows) < self.flush_every:
+            return
+        mode = 'a' if os.path.exists(self.results_filename) else 'w'
+        header = mode == 'w'
+        pd.DataFrame(self._rows).to_csv(self.results_filename, index=False, mode=mode, header=header)
+        self._rows.clear()
 
     def run(self) -> pd.DataFrame:
-        """Executes the simulation based on the provided configuration."""
-        num_total_runs = (
-                len(self.config['models']) * len(self.config['strategies']) * self.config['num_runs_per_setting']
-        )
-        print(f"Starting simulations... Total experiments to run: {num_total_runs}")
-
-        with tqdm(total=num_total_runs, desc="Overall Progress") as pbar:
+        total = (len(self.config['models']) * len(self.config['strategies']) * self.config['num_runs_per_setting'])
+        with tqdm(total=total, desc='Static simulations') as pbar:
             for model_name, model_params in self.config['models'].items():
+                base_params = {k: v for k, v in model_params.items() if k != 'model_type'}
                 for strategy in self.config['strategies']:
-                    for i in range(self.config['num_runs_per_setting']):
-
-                        # --- 1. Generate network (corrected call) ---
-                        params_for_func = model_params.copy()
-                        params_for_func.pop('model_type')
-                        G = generate_network(
-                            model_type=model_params['model_type'],
-                            num_nodes=self.config['num_nodes'],
-                            **params_for_func
-                        )
-
-                        # --- 2. Run attack simulation to get the dictionary of results ---
+                    for run_id in range(self.config['num_runs_per_setting']):
+                        seed_used = self._seed(model_name, strategy, run_id)
+                        gen_params = base_params.copy()
+                        G = generate_network(model_type=model_params['model_type'], num_nodes=self.config['num_nodes'], **gen_params)
                         attack_results = simulate_attack(G, strategy)
-
-                        # --- 3. Process the dictionary of results ---
-                        # The number of steps is the length of any of the metric lists
-                        num_steps = len(attack_results['lcc'])
-                        num_graph_nodes = len(G.nodes()) # Use actual graph size for accuracy
-
-                        for step in range(num_steps):
-                            # Start with the base info for this row
-                            row_data = {
+                        steps = len(next(iter(attack_results.values())))
+                        n_nodes = len(G.nodes())
+                        for step in range(steps):
+                            row = {
                                 'model_name': model_name,
                                 'attack_strategy': strategy,
-                                'run_id': i,
-                                'nodes_removed_fraction': step / num_graph_nodes if num_graph_nodes > 0 else 0
+                                'run_id': run_id,
+                                'seed': seed_used,
+                                'step_index': step,
+                                'nodes_removed': step,
+                                'nodes_removed_fraction': step / n_nodes if n_nodes else 0.0,
+                                'original_nodes': n_nodes,
                             }
-
-                            # Add the value of each metric at the current step to the row
-                            for metric_name, values_list in attack_results.items():
-                                # This will create columns like 'lcc' and 'smoothness'
-                                row_data[metric_name] = values_list[step]
-
-                            self.results.append(row_data)
-
+                            for pk, pv in gen_params.items():
+                                row[f'gen_{pk}'] = pv
+                            for metric_name, series in attack_results.items():
+                                row[metric_name] = series[step]
+                            self._rows.append(row)
+                        self._flush()
                         pbar.update(1)
+        if self.flush_every > 0:
+            self._flush(force=True)
+            df = pd.read_csv(self.results_filename)
+        else:
+            df = pd.DataFrame(self._rows)
+            df.to_csv(self.results_filename, index=False)
+        return df
 
-        print("Simulations complete.")
-        return pd.DataFrame(self.results)
 
 def main():
-    """Main function to execute the simulation and save the results."""
     runner = SimulationRunner(config=STATIC_SIMULATION_CONFIG)
-    results_dataframe = runner.run()
+    df = runner.run()
+    print(f"Saved results to '{runner.results_filename}' ({len(df)} rows)")
 
-    output_file = STATIC_SIMULATION_CONFIG['results_filename']
-    results_dataframe.to_csv(output_file, index=False)
-    print(f"\nResults successfully saved to '{output_file}'")
 
 if __name__ == '__main__':
     main()

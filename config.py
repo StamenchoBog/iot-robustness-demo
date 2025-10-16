@@ -12,30 +12,33 @@ def models():
     }
 
 STATIC_SIMULATION_CONFIG = {
-    'num_nodes': 200,
-    'num_runs_per_setting': 100,
+    'num_nodes': 300,
+    'num_runs_per_setting': 150,
     'models': models(),
     'strategies': ['random', 'targeted_degree', 'targeted_centrality'],
-    'results_filename': 'static_analysis_200n_100r.csv'
+    'results_filename': 'static_analysis_300n_150r.csv',
+    'random_seed_base': 1000,
+    'flush_every': 0,
 }
 
 DYNAMIC_SIMULATION_CONFIG = {
-    'num_nodes': 200,
-    'num_runs_per_setting': 20,
+    'num_nodes': 300,
+    'num_runs_per_setting': 150,
     'models': models(),
-    # Dynamic parameters
     'steps': 1000,
     'packet_rate': 2,
-    'node_failure_period': 100,
-    'node_recovery_steps': 20,
-    'base_energy_drain': 0.05,
+    'node_failure_period': 40,
+    'node_recovery_steps': 25,
+    'base_energy_drain': 0.12,
     'tx_energy_cost': 0.05,
     'rx_energy_cost': 0.02,
-    'initial_energy': 100.0,
-    'link_flip_prob': 0.0,
+    'initial_energy': 50.0,
+    'link_flip_prob': 0.005,
     'link_down_steps': 10,
-    'ttr_epsilon': 0.02,
-    # Outputs
-    'timeseries_filename': 'dynamic_timeseries.csv',
-    'summary_filename': 'dynamic_summary.csv',
+    'ttr_epsilon': 0.01,
+    'ddr_smoothing_window': 20,
+    'timeseries_filename': 'dynamic_analysis_timeseries_300n_150r.csv',
+    'summary_filename': 'dynamic_analysis_summary_300n_150r.csv',
+    'random_seed_base': 2000,
+    'flush_every': 0,
 }
