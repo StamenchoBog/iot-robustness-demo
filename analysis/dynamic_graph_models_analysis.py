@@ -265,6 +265,7 @@ def simulate_dynamic(graph: nx.Graph, params: Optional[DynamicParams] = None, se
             'total_packets': total_packets,
             'ddr_cumulative': (successful_packets / total_packets) if total_packets else 0.0,
             'delivered_this_step': delivered_this_step,
+            'ddr_step': (delivered_this_step / float(params.packet_rate)) if params.packet_rate > 0 else np.nan,
         }
 
         if params.compute_algebraic_connectivity:

@@ -38,14 +38,13 @@ Note: This will generate the results CSV at the path set in config.py (default: 
 
 ### Plot results
 
-Available metrics in the results CSV: `lcc`, `algebraic_connectivity`, `smoothness`.
+Available metrics in the results CSV: `lcc`, `algebraic_connectivity`.
 
 ```shell
 # Save plots from static analysis to the plots/ directory (pass only a filename, not a path)
-## Metrics (LCC, Algebraic Connectivity, Smoothness)
+## Metrics (LCC, Algebraic Connectivity)
 python -m plots.static_plot_results --save --output static_analysis_lcc_comparison.png
 python -m plots.static_plot_results --metric algebraic_connectivity --save --output static_analysis_algebraic_connectivity_comparison.png
-python -m plots.static_plot_results --metric smoothness --save --output static_analysis_smoothness_comparison.png
 
 # Save plots from static analysis to the plots/ directory (pass only a filename, not a path)
 ## Metrics (LCC, Algebraic Connectivity, DDR Cumulative, Online Fraction)
