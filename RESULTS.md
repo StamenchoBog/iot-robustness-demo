@@ -30,25 +30,27 @@
 | Erdős-Rényi | 0.317 |
 ---
 
-> ## Findings
->
-> ### Barabási-Albert & Hierarchical Networks
->
-> - Observation: Targeted Degree and Targeted Centrality attacks are nearly identical and cause rapid collapse.
-> - Interpretation: Hubs/gateways are also key bridges; both strategies target the same critical nodes.
->
-> ### Erdős-Rényi Network
->
-> - Observation: All three strategies behave similarly.
-> - Interpretation: The network is homogeneous; intelligent targeting offers little advantage.
->
-> ### Watts-Strogatz & Random Geometric Networks
->
-> - Observation: Centrality-based attacks are most damaging, then degree-based, then random.
-> - Interpretation: High-centrality nodes form shortcuts/bridges across clusters or geographic regions.
->
+## Findings
+
+### Barabási-Albert & Hierarchical Networks
+
+- Observation: Targeted Degree and Targeted Centrality attacks are nearly identical and cause rapid collapse.
+- Interpretation: Hubs/gateways are also key bridges; both strategies target the same critical nodes.
+
+### Erdős-Rényi Network
+
+- Observation: All three strategies behave similarly.
+- Interpretation: The network is homogeneous; intelligent targeting offers little advantage.
+
+### Watts-Strogatz & Random Geometric Networks
+
+- Observation: Centrality-based attacks are most damaging, then degree-based, then random.
+- Interpretation: High-centrality nodes form shortcuts/bridges across clusters or geographic regions.
+
 ---
 
+> [!NOTE]
+>
 > ### Summary Table
 >
 > | Network Model | Resilience to Random Failures | Most Effective Targeted Attack | Key Structural Reason |
@@ -61,4 +63,3 @@
 >
 
 # Dynamic Resilience Analysis: Results
-
