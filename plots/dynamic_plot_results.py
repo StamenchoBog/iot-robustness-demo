@@ -19,7 +19,7 @@ def ci95(series: pd.Series) -> float:
 def plot_timeseries(df: pd.DataFrame, metric: str, save: bool, output: str):
     if metric not in df.columns:
         raise ValueError(f"Metric '{metric}' not found in time series data. Available: {
-                         list(df.columns)}")
+                        list(df.columns)}")
 
     # Coerce and sanitize metric column
     df = df.copy()
@@ -69,8 +69,7 @@ def plot_timeseries(df: pd.DataFrame, metric: str, save: bool, output: str):
 
 def plot_summary(df: pd.DataFrame, metric: str, save: bool, output: str):
     if metric not in df.columns:
-        raise ValueError(f"Metric '{metric}' not found in summary data. Available: {
-                         list(df.columns)}")
+        raise ValueError(f"Metric '{metric}' not found in summary data. Available: {list(df.columns)}")
 
     sns.set_style("whitegrid")
 
@@ -103,29 +102,64 @@ def plot_summary(df: pd.DataFrame, metric: str, save: bool, output: str):
 
     # Drop rows with no mean (all-NaN in that model)
     agg = agg.replace([np.inf, -np.inf], np.nan).dropna(subset=['mean'])
+    
+    # Sort by mean value for better visual comparison (descending for most metrics)
+    if metric in ('time_to_first_death', 'time_to_lcc_collapse'):
+        # Higher is better (survived longer)
+        agg = agg.sort_values('mean', ascending=False)
+    else:
+        # For DDR, higher is better; for TTR, lower is better
+        agg = agg.sort_values('mean', ascending=(metric == 'ttr_mean'))
 
-    plt.figure(figsize=(9, 5))
+    plt.figure(figsize=(10, 6))
 
     if agg.empty:
         plt.text(0.5, 0.5, 'No data available for this metric',
-                 ha='center', va='center')
-        plt.title(f"Dynamic Summary: {metric.replace('_', ' ').title()}")
+                ha='center', va='center', fontsize=14)
+        plt.title(f"Dynamic Summary: {metric.replace('_', ' ').title()}", fontsize=16)
         plt.axis('off')
     else:
-        # Matplotlib bar with explicit yerr
+        # Create bar chart with color gradient
         x = np.arange(len(agg))
         heights = agg['mean'].to_numpy()
         yerr = agg['ci95'].to_numpy()
+        
+        # Color bars based on performance (green=good, orange=warning, red=poor)
+        if metric == 'ddr_final':
+            colors = ['#d62728' if h < 0.95 else '#ff7f0e' if h < 0.98 else '#2ca02c' for h in heights]
+        elif metric == 'ttr_mean':
+            colors = ['#2ca02c' if h < 0.1 else '#ff7f0e' if h < 0.5 else '#d62728' for h in heights]
+        elif metric in ('time_to_first_death', 'time_to_lcc_collapse'):
+            colors = ['#d62728' if h < horizon * 0.8 else '#ff7f0e' if h < horizon * 0.95 else '#2ca02c' for h in heights]
+        else:
+            colors = '#1f77b4'  # Default blue
 
-        plt.bar(x, heights, yerr=yerr, capsize=3, alpha=0.85)
-        plt.xticks(x, agg['model_name'], rotation=20, ha='right')
-        plt.xlabel('Model')
-        plt.ylabel(metric.replace('_', ' ').title())
-        title = f"Dynamic Summary: {metric.replace(
-            '_', ' ').title()} (Mean ± 95% CI)"
+        bars = plt.bar(x, heights, yerr=yerr, capsize=5, alpha=0.8, 
+                      color=colors, edgecolor='black', linewidth=1.2)
+        
+        # Add value labels on top of bars
+        for i, (bar, height, err) in enumerate(zip(bars, heights, yerr)):
+            label_height = height + err + (max(heights) * 0.02)
+            if metric == 'ddr_final':
+                label = f'{height:.4f}'
+            elif metric == 'ttr_mean':
+                label = f'{height:.2f}'
+            else:
+                label = f'{int(height)}'
+            plt.text(bar.get_x() + bar.get_width()/2., label_height,
+                    label, ha='center', va='bottom', fontsize=10, fontweight='bold')
+        
+        plt.xticks(x, agg['model_name'], rotation=15, ha='right', fontsize=11)
+        plt.xlabel('Network Model', fontsize=12, fontweight='bold')
+        plt.ylabel(metric.replace('_', ' ').title(), fontsize=12, fontweight='bold')
+        
+        title = f"{metric.replace('_', ' ').title()}"
         if metric in ('time_to_first_death', 'time_to_lcc_collapse'):
-            title += f"\n(Note: 'no event' runs set to horizon={int(horizon)})"
-        plt.title(title)
+            title += f"\n(Horizon = {int(horizon)} steps; no event runs shown at horizon)"
+        plt.title(title, fontsize=14, fontweight='bold', pad=15)
+        
+        # Add grid for easier reading
+        plt.grid(axis='y', alpha=0.3, linestyle='--')
         plt.tight_layout()
 
     if save:
@@ -146,7 +180,7 @@ def plot_summary(df: pd.DataFrame, metric: str, save: bool, output: str):
 def plot_distribution(df: pd.DataFrame, metric: str, save: bool, output: str, style: str = 'violin', log_y: bool = False):
     if metric not in df.columns:
         raise ValueError(f"Metric '{metric}' not in summary data. Available: {
-                         list(df.columns)}")
+                        list(df.columns)}")
     sns.set_style("whitegrid")
     df = df.copy()
     df[metric] = pd.to_numeric(df[metric], errors='coerce')
@@ -174,12 +208,12 @@ def plot_distribution(df: pd.DataFrame, metric: str, save: bool, output: str, st
     order = df.groupby('model_name')[metric].median().sort_values().index
     if style == 'violin':
         sns.violinplot(data=df, x='model_name', y=metric,
-                       order=order, inner=None, cut=0)
+                    order=order, inner=None, cut=0)
     else:
         sns.boxplot(data=df, x='model_name', y=metric, order=order)
     # jittered points
     sns.stripplot(data=df, x='model_name', y=metric,
-                  order=order, color='k', alpha=0.35, size=3)
+                order=order, color='k', alpha=0.35, size=3)
     # Means with CI
     means = df.groupby('model_name')[metric].mean()
     cis = df.groupby('model_name')[metric].apply(ci95)
@@ -188,7 +222,7 @@ def plot_distribution(df: pd.DataFrame, metric: str, save: bool, output: str, st
         m = means[name]
         c = cis[name]
         plt.errorbar(x_positions[name], m, yerr=c,
-                     fmt='o', color='red', capsize=3)
+                    fmt='o', color='red', capsize=3)
     plt.xlabel('Model')
     plt.ylabel(metric.replace('_', ' ').title())
     title = f"Distribution of {metric.replace('_', ' ').title()} per Run"
@@ -288,10 +322,57 @@ def plot_survival(df: pd.DataFrame, metric: str, save: bool, output: str):
         plt.show()
 
 
+def plot_timeseries_overlay(df: pd.DataFrame, metric: str, save: bool, output: str):
+    """Create a single plot with all models overlaid for easier comparison."""
+    if metric not in df.columns:
+        raise ValueError(f"Metric '{metric}' not found in time series data. Available: {list(df.columns)}")
+
+    df = df.copy()
+    df[metric] = pd.to_numeric(df[metric], errors='coerce')
+    df.loc[~np.isfinite(df[metric]), metric] = np.nan
+
+    sns.set_style("whitegrid")
+    models = sorted(df['model_name'].unique())
+    
+    plt.figure(figsize=(12, 6))
+    
+    colors = plt.cm.tab10(np.linspace(0, 1, len(models)))
+    
+    for idx, model_name in enumerate(models):
+        sub = df[df['model_name'] == model_name]
+        agg = sub.groupby('time')[metric].agg(['mean', ci95]).reset_index()
+        agg = agg.replace([np.inf, -np.inf], np.nan)
+        agg['ci95'] = np.nan_to_num(agg['ci95'].to_numpy(), nan=0.0)
+        agg = agg.dropna(subset=['mean'])
+        
+        if not agg.empty:
+            plt.plot(agg['time'], agg['mean'], label=model_name, 
+                    color=colors[idx], linewidth=2, alpha=0.8)
+            plt.fill_between(agg['time'], agg['mean'] - agg['ci95'],
+                        agg['mean'] + agg['ci95'], alpha=0.15, color=colors[idx])
+    
+    plt.xlabel('Time Step', fontsize=12)
+    plt.ylabel(metric.replace('_', ' ').title(), fontsize=12)
+    plt.title(f"Dynamic {metric.replace('_', ' ').title()} Over Time (All Models)", fontsize=14, pad=15)
+    plt.legend(loc='best', framealpha=0.9)
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    
+    if save:
+        out_dir = "plots/dynamic_analysis_results"
+        os.makedirs(out_dir, exist_ok=True)
+        path = os.path.join(out_dir, output)
+        plt.savefig(path, dpi=300, bbox_inches='tight')
+        print(f"Saved overlay time series plot to {path}")
+        plt.close()
+    else:
+        plt.show()
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Plot dynamic simulation results.")
-    parser.add_argument('--plot', choices=['timeseries', 'summary'],
+    parser.add_argument('--plot', choices=['timeseries', 'summary', 'timeseries-overlay'],
                         default='timeseries', help='Type of plot to generate.')
     parser.add_argument('--metric', type=str, default='lcc',
                         help="Timeseries metric (e.g., 'lcc', 'ddr_cumulative', 'online_fraction', 'algebraic_connectivity').")
@@ -310,16 +391,21 @@ def main():
 
     if args.plot == 'timeseries':
         if not os.path.exists(ts_file):
-            print(f"Error: time series file '{
-                  ts_file}' not found. Run the dynamic simulation first.")
+            print(f"Error: time series file '{ts_file}' not found. Run the dynamic simulation first.")
             return
         df_ts = pd.read_csv(ts_file)
         output = args.output or f"dynamic_{args.metric}_timeseries.png"
         plot_timeseries(df_ts, args.metric, args.save, output)
+    elif args.plot == 'timeseries-overlay':
+        if not os.path.exists(ts_file):
+            print(f"Error: time series file '{ts_file}' not found. Run the dynamic simulation first.")
+            return
+        df_ts = pd.read_csv(ts_file)
+        output = args.output or f"dynamic_{args.metric}_overlay.png"
+        plot_timeseries_overlay(df_ts, args.metric, args.save, output)
     else:
         if not os.path.exists(sm_file):
-            print(f"Error: summary file '{
-                  sm_file}' not found. Run the dynamic simulation first.")
+            print(f"Error: summary file '{sm_file}' not found. Run the dynamic simulation first.")
             return
         df_sm = pd.read_csv(sm_file)
         output = args.output or f"dynamic_{args.summary_metric}_summary.png"

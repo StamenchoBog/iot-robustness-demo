@@ -46,21 +46,21 @@ Available metrics in the results CSV: `lcc`, `algebraic_connectivity`.
 python -m plots.static_plot_results --save --output static_analysis_lcc_comparison.png
 python -m plots.static_plot_results --metric algebraic_connectivity --save --output static_analysis_algebraic_connectivity_comparison.png
 
-# Save plots from static analysis to the plots/ directory (pass only a filename, not a path)
-## Metrics (LCC, Algebraic Connectivity, DDR Cumulative, Online Fraction)
-python -m plots.dynamic_plot_results --plot timeseries --metric lcc --save --output dynamic_lcc_timeseries.png
-python -m plots.dynamic_plot_results --plot timeseries --metric algebraic_connectivity --save --output dynamic_ac_timeseries.png
-python -m plots.dynamic_plot_results --plot timeseries --metric ddr_cumulative --save --output dynamic_ddr_timeseries.png
-python -m plots.dynamic_plot_results --plot timeseries --metric online_fraction --save --output dynamic_online_fraction_timeseries.png
-## Summary
+# Dynamic analysis plots
+## Overlay plots (all models on one chart for comparison)
+python -m plots.dynamic_plot_results --plot timeseries-overlay --metric lcc --save --output dynamic_lcc_overlay.png
+python -m plots.dynamic_plot_results --plot timeseries-overlay --metric ddr_cumulative --save --output dynamic_ddr_overlay.png
+python -m plots.dynamic_plot_results --plot timeseries-overlay --metric online_fraction --save --output dynamic_online_overlay.png
+
+## Summary plots (bar charts with color-coded performance)
 python -m plots.dynamic_plot_results --plot summary --summary-metric ddr_final --save --output dynamic_ddr_summary.png
 python -m plots.dynamic_plot_results --plot summary --summary-metric ttr_mean --save --output dynamic_ttr_summary.png
-python -m plots.dynamic_plot_results --plot summary --summary-metric time_to_first_death --save --output dynamic_first_death_summary.png
 python -m plots.dynamic_plot_results --plot summary --summary-metric time_to_lcc_collapse --save --output dynamic_lcc_collapse_summary.png
 ```
 
 Notes:
 - When using `--save`, files are written into the plots/ directory automatically.
+- Overlay plots show all models on one chart for easy comparison
 
 ### Generate graph visualizations
 
