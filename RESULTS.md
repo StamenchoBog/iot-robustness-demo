@@ -2,8 +2,8 @@
 
 ## Plots
 
-![LCC](static_analysis_results/static_analysis_lcc_comparison.png)
-![Algebraic Connectivity](static_analysis_results/static_analysis_algebraic_connectivity_comparison.png)
+![LCC](plots/static_analysis_results/static_analysis_lcc_comparison.png)
+![Algebraic Connectivity](plots/static_analysis_results/static_analysis_algebraic_connectivity_comparison.png)
 
 ---
 
@@ -50,6 +50,8 @@
 ---
 
 > [!NOTE]
+>
+> Below we can view the summary table as a conclusion to the static analysis experiment.
 >
 > ### Summary Table
 >
