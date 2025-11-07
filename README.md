@@ -10,6 +10,18 @@ To cover a broad set of structures and networks, several graph models are includ
 
 ## Local Development
 
+### Current Configuration (config.py)
+
+**Simulation Parameters:**
+- Nodes: 300 per network
+- Runs: 150 per model/strategy
+- Dynamic steps: 3500 (captures energy depletion)
+- Energy: 100 initial, 0.03 base drain (~3333 step lifetime)
+
+**Network Models:** Erdős-Rényi, Barabási-Albert, Watts-Strogatz, Random Geometric, Hierarchical
+
+**Attack Strategies (Static):** Random, Targeted Degree, Targeted Centrality
+
 ### Install Requirements
 
 ```shell
@@ -34,7 +46,10 @@ python -m simulation.static_simulation
 python -m simulation.dynamic_simulation
 ```
 
-Note: This will generate the results CSV at the path set in config.py (default: static_analysis_Xn_Yr.csv).
+Note: CSV results are saved to the `csv/` folder (configured in config.py):
+
+- Attack simulation: `csv/attack_simulation_results.csv`
+- Operational simulation: `csv/operational_simulation_timeseries.csv` and `csv/operational_simulation_summary.csv`
 
 ### Plot results
 
@@ -48,19 +63,23 @@ python -m plots.static_plot_results --metric algebraic_connectivity --save --out
 
 # Dynamic analysis plots
 ## Overlay plots (all models on one chart for comparison)
-python -m plots.dynamic_plot_results --plot timeseries-overlay --metric lcc --save --output dynamic_lcc_overlay.png
-python -m plots.dynamic_plot_results --plot timeseries-overlay --metric ddr_cumulative --save --output dynamic_ddr_overlay.png
-python -m plots.dynamic_plot_results --plot timeseries-overlay --metric online_fraction --save --output dynamic_online_overlay.png
+python -m plots.dynamic_plot_results --plot timeseries-overlay --metric lcc --save
+python -m plots.dynamic_plot_results --plot timeseries-overlay --metric ddr_cumulative --save
+python -m plots.dynamic_plot_results --plot timeseries-overlay --metric online_fraction --save
 
 ## Summary plots (bar charts with color-coded performance)
-python -m plots.dynamic_plot_results --plot summary --summary-metric ddr_final --save --output dynamic_ddr_summary.png
-python -m plots.dynamic_plot_results --plot summary --summary-metric ttr_mean --save --output dynamic_ttr_summary.png
-python -m plots.dynamic_plot_results --plot summary --summary-metric time_to_lcc_collapse --save --output dynamic_lcc_collapse_summary.png
+python -m plots.dynamic_plot_results --plot summary --summary-metric ddr_final --save
+python -m plots.dynamic_plot_results --plot summary --summary-metric ttr_mean --save
+python -m plots.dynamic_plot_results --plot summary --summary-metric time_to_first_death --save
+python -m plots.dynamic_plot_results --plot summary --summary-metric time_to_lcc_collapse --save
 ```
 
 Notes:
-- When using `--save`, files are written into the plots/ directory automatically.
+
+- Simulation runs for 3500 steps to capture energy depletion effects
+- When using `--save`, files are written into `plots/dynamic_analysis_results/` automatically
 - Overlay plots show all models on one chart for easy comparison
+- Summary plots use color coding: green (good), orange (moderate), red (poor)
 
 ### Generate graph visualizations
 

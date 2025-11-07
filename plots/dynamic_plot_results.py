@@ -125,11 +125,20 @@ def plot_summary(df: pd.DataFrame, metric: str, save: bool, output: str):
         yerr = agg['ci95'].to_numpy()
         
         # Color bars based on performance (green=good, orange=warning, red=poor)
+        # Updated thresholds for 3500-step simulation with energy depletion
         if metric == 'ddr_final':
-            colors = ['#d62728' if h < 0.95 else '#ff7f0e' if h < 0.98 else '#2ca02c' for h in heights]
+            # With energy depletion: 56.9% (Hierarchical) to 92.9% (RGG)
+            # Red < 75%, Orange < 88%, Green ≥ 88%
+            colors = ['#d62728' if h < 0.75 else '#ff7f0e' if h < 0.88 else '#2ca02c' for h in heights]
         elif metric == 'ttr_mean':
             colors = ['#2ca02c' if h < 0.1 else '#ff7f0e' if h < 0.5 else '#d62728' for h in heights]
-        elif metric in ('time_to_first_death', 'time_to_lcc_collapse'):
+        elif metric == 'time_to_first_death':
+            # Energy lifetime: 1388 (Hierarchical) to 3094 (ER)
+            # Red < 2000 steps, Orange < 2700 steps, Green ≥ 2700 steps
+            colors = ['#d62728' if h < 2000 else '#ff7f0e' if h < 2700 else '#2ca02c' for h in heights]
+        elif metric == 'time_to_lcc_collapse':
+            # All models collapse eventually due to energy depletion
+            # Use horizon-based thresholds (earlier collapse = worse)
             colors = ['#d62728' if h < horizon * 0.8 else '#ff7f0e' if h < horizon * 0.95 else '#2ca02c' for h in heights]
         else:
             colors = '#1f77b4'  # Default blue
@@ -385,9 +394,9 @@ def main():
     args = parser.parse_args()
 
     ts_file = DYNAMIC_SIMULATION_CONFIG.get(
-        'timeseries_filename', 'dynamic_timeseries.csv')
+        'timeseries_filename', 'csv/operational_simulation_timeseries.csv')
     sm_file = DYNAMIC_SIMULATION_CONFIG.get(
-        'summary_filename', 'dynamic_summary.csv')
+        'summary_filename', 'csv/operational_simulation_summary.csv')
 
     if args.plot == 'timeseries':
         if not os.path.exists(ts_file):

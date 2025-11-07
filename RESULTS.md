@@ -28,6 +28,7 @@
 | Watts-Strogatz | 0.173 |
 | Random Geometric | 0.160 |
 | Erdős-Rényi | 0.317 |
+
 ---
 
 ## Findings
@@ -68,104 +69,124 @@
 
 ## Plots
 
-![Data Delivery Ratio](plots/dynamic_analysis_results/dynamic_ddr_summary.png)
-![Time to Recovery](plots/dynamic_analysis_results/dynamic_ttr_summary.png)
-![Time to LCC Collapse](plots/dynamic_analysis_results/dynamic_lcc_collapse_summary.png)
-
 ![LCC Over Time](plots/dynamic_analysis_results/dynamic_lcc_overlay.png)
-![Data Delivery Ratio Over Time](plots/dynamic_analysis_results/dynamic_ddr_overlay.png)
+![Online Nodes Over Time](plots/dynamic_analysis_results/dynamic_online_fraction_overlay.png)
+![Data Delivery Ratio Over Time](plots/dynamic_analysis_results/dynamic_ddr_cumulative_overlay.png)
+
+![Data Delivery Ratio Summary](plots/dynamic_analysis_results/dynamic_ddr_final_summary.png)
+![Time to First Death](plots/dynamic_analysis_results/dynamic_time_to_first_death_summary.png)
+![Time to Recovery](plots/dynamic_analysis_results/dynamic_ttr_mean_summary.png)
+![Time to LCC Collapse](plots/dynamic_analysis_results/dynamic_time_to_lcc_collapse_summary.png)
 
 ---
 
-### Performance Metrics Summary
+### Performance Metrics Summary (3500 Steps with Energy Depletion)
 
-**Data Delivery Ratio (DDR):**
+**Data Delivery Ratio (Final DDR after energy depletion):**
 
 | Network Model | Avg DDR | Performance |
 | :--- | :--- | :--- |
-| Watts-Strogatz | 1.0000 | Perfect ⭐⭐⭐⭐⭐ |
-| Random Geometric | 0.9994 | Excellent ⭐⭐⭐⭐⭐ |
-| Barabási-Albert | 0.9973 | Excellent ⭐⭐⭐⭐⭐ |
-| Erdős-Rényi | 0.9905 | Very Good ⭐⭐⭐⭐ |
-| Hierarchical | 0.9063 | Moderate ⭐⭐⭐ |
+| Random Geometric | 0.9285 | Excellent ⭐⭐⭐⭐⭐ |
+| Erdős-Rényi | 0.9237 | Excellent ⭐⭐⭐⭐⭐ |
+| Watts-Strogatz | 0.9222 | Excellent ⭐⭐⭐⭐⭐ |
+| Barabási-Albert | 0.8883 | Good ⭐⭐⭐⭐ |
+| Hierarchical | 0.5692 | Poor ⭐⭐ |
 
-**Resilience to Random Failures:**
+**Energy Lifetime & Resilience:**
 
-| Network Model | LCC Collapses | TTR Events | First Deaths |
+| Network Model | Time to First Death (steps) | LCC Collapses | Final Online Fraction |
 | :--- | :--- | :--- | :--- |
-| Watts-Strogatz | 0/150 (0%) | 0% | 0/150 |
-| Random Geometric | 0/150 (0%) | 0% | 0/150 |
-| Barabási-Albert | 0/150 (0%) | 0% | 0/150 |
-| Erdős-Rényi | 0/150 (0%) | 0% | 0/150 |
-| Hierarchical | 9/150 (6%) | 59% | 0/150 |
+| Erdős-Rényi | 3094 | 150/150 (100%) | ~0% |
+| Watts-Strogatz | 2976 | 150/150 (100%) | ~0% |
+| Random Geometric | 2783 | 150/150 (100%) | ~0% |
+| Barabási-Albert | 2101 ⚠️ | 150/150 (100%) | ~0% |
+| Hierarchical | 1388 ⚠️ | 150/150 (100%) | ~0% |
 
 ---
 
-## Findings
+## Findings: Energy Depletion & Network Degradation
 
-### Watts-Strogatz & Random Geometric Networks
+### Energy Lifetime Rankings
 
-- **Observation:** Perfect or near-perfect packet delivery (DDR > 0.999). No LCC collapses.
-- **Interpretation:** High clustering with shortcuts (WS) and spatial redundancy (RGG) provide excellent resilience to random failures. Multiple routing paths ensure continuous operation.
+**Key Observation:** Different topologies exhibit dramatically different energy consumption patterns:
 
-### Barabási-Albert Network
+1. **Erdős-Rényi (3094 steps)** - Longest survival due to uniform load distribution
+2. **Watts-Strogatz (2976 steps)** - Balanced traffic via clustering + shortcuts
+3. **Random Geometric (2783 steps)** - Good load balancing with spatial routing
+4. **Barabási-Albert (2101 steps)** - Hub nodes die early from high traffic load
+5. **Hierarchical (1388 steps)** - Gateways exhaust energy first (all sensor traffic)
 
-- **Observation:** Excellent DDR (0.9973). No collapses despite hub-based structure.
-- **Interpretation:** Random failures rarely hit critical hubs (low probability). When non-hub nodes fail, connectivity maintained through hub redundancy.
+### Network-Specific Analysis
 
-### Erdős-Rényi Network
+**Random Geometric, Erdős-Rényi & Watts-Strogatz:**
 
-- **Observation:** Good DDR (0.9905). Predictable, homogeneous behavior.
-- **Interpretation:** All nodes equally important. Random failures have moderate, uniform impact across the network.
+- **Observation:** Maintain 92-93% DDR throughout 3500 steps. Graceful degradation as nodes die.
+- **Energy Depletion:** Uniform death patterns (~3000 steps). Networks remain partially connected until near-total collapse.
+- **Interpretation:** Distributed topologies balance energy load. Multiple redundant paths compensate for node failures.
 
-### Hierarchical Network
+**Barabási-Albert:**
 
-- **Observation:** Significantly lower DDR (0.9063). 6% of runs experienced LCC collapse. 59% of runs had measurable disruptions (TTR > 0).
-- **Interpretation:** Gateway nodes are single points of failure (6.6% random hit probability). When a gateway fails, ~14 connected sensors become isolated. Rapid recovery once gateway restored (TTR ≈ 0.31 steps).
+- **Observation:** Earlier first deaths (2101 steps). DDR drops to 88.8%, showing stress under energy constraints.
+- **Energy Depletion:** Hub nodes die first due to forwarding traffic for many peripheral nodes.
+- **Interpretation:** Scale-free networks are vulnerable to energy-based "targeted" attacks. High-degree nodes exhaust energy faster, creating cascading failures.
+
+**Hierarchical:**
+
+- **Observation:** Catastrophic performance. First deaths at 1388 steps. Final DDR only 56.9%.
+- **Energy Depletion:** Gateway nodes die first (all sensor traffic flows through them). 100% LCC collapse rate.
+- **Interpretation:** Centralized architecture creates extreme energy hotspots. Gateway failures instantly partition the network, isolating sensor clusters.
 
 ---
 
 > [!NOTE]
 >
-> ### Summary Table
+> ### Overall Performance Summary
 >
-> | Network Model | DDR Performance | Resilience to Random Failures | Resilience to Targeted Attacks | Key Characteristic |
+> | Network Model | DDR (3500 steps) | Energy Lifetime | Resilience to Targeted Attacks | Key Characteristic |
 > | :--- | :--- | :--- | :--- | :--- |
-> | Watts-Strogatz | Perfect (1.0000) | Excellent | Moderate | Clustering + shortcuts |
-> | Random Geometric | Excellent (0.9994) | Excellent | Moderate | Spatial redundancy |
-> | Barabási-Albert | Excellent (0.9973) | Excellent | Poor | Hub-based, random-safe |
-> | Erdős-Rényi | Very Good (0.9905) | Good | Moderate | Homogeneous structure |
-> | Hierarchical | Moderate (0.9063) | Vulnerable | Extremely Vulnerable | Gateway dependency |
+> | Random Geometric | 92.9% | 2783 steps | Moderate | Spatial redundancy, graceful degradation |
+> | Erdős-Rényi | 92.4% | 3094 steps | Moderate | Uniform load distribution, longest survival |
+> | Watts-Strogatz | 92.2% | 2976 steps | Moderate | Clustering + shortcuts, balanced traffic |
+> | Barabási-Albert | 88.8% | 2101 steps ⚠️ | Poor | Hub energy exhaustion, scale-free vulnerability |
+> | Hierarchical | 56.9% | 1388 steps ⚠️ | Extremely Poor | Gateway dependency, catastrophic failures |
 >
+
+---
 
 ### Critical Insights
 
-**1. Network Topology Matters More for Targeted Attacks**
-- Random failures: Most topologies highly resilient (DDR > 99%)
-- Targeted attacks: Hierarchical/BA collapse rapidly (see static analysis)
-- Implication: Design choice depends on threat model
+#### 1. Energy-Based "Targeted Attacks" Emerge Naturally
 
-**2. Energy Model Validation**
-- No nodes died from energy exhaustion in 1000 steps
-- Topology effects visible, not masked by universal energy collapse
-- Updated parameters (`initial_energy=100`, `base_energy_drain=0.03`) enable meaningful comparisons
+- **Hub-based topologies** (BA, Hierarchical) suffer from natural load concentration
+- High-degree nodes exhaust energy faster, creating cascading failures
+- Energy depletion reveals hidden vulnerabilities not visible in static analysis
 
-**3. TTR Measurement: Zero is Good News**
-- Most networks (BA, ER, WS, RGG) have TTR = 0
-- Meaning: Single random failures don't cause ≥5% LCC degradation
-- Only Hierarchical experiences measurable disruptions (centralized structure)
+#### 2. Distributed Topologies Win on Energy Efficiency
 
-**4. Hierarchical Trade-offs**
-- Advantages: Simple management, clear data flow, efficient routing
-- Disadvantages: 10% packet loss, 6% collapse rate, gateway dependency
-- Mitigation: Redundant gateways, multi-parent sensors, inter-gateway links
+- ER, WS, RGG maintain 92%+ DDR even after 3500 steps
+- Uniform load distribution extends network lifetime by 40-120% vs. hierarchical
+- Multiple redundant paths enable graceful degradation
+
+#### 3. Hierarchical Networks Face Dual Vulnerabilities
+
+- **Energy hotspots:** Gateways die 2.2× faster than distributed networks
+- **Structural brittleness:** Single gateway failure partitions 14+ sensors
+- **Recommendation:** Add gateway redundancy, multi-parent sensors, inter-gateway mesh
+
+#### 4. Barabási-Albert: Random-Resilient but Energy-Vulnerable
+
+- **Static analysis:** Poor under targeted attacks (6% removal → 50% LCC loss)
+- **Dynamic analysis:** Good under random failures, but hub energy exhaustion emerges
+- **Trade-off:** Natural load imbalance creates energy-based "targeted" effects
+
+---
 
 ### Comparison: Static vs. Dynamic Analysis
 
-| Network Model | Random Failures (Dynamic) | Targeted Attacks (Static) | Recommendation |
-|---------------|---------------------------|---------------------------|----------------|
-| Watts-Strogatz | Excellent (DDR=1.00) | Moderate (17% removal → 50% loss) | ✅ Best for high-reliability IoT |
-| Random Geometric | Excellent (DDR=0.999) | Moderate (16% removal → 50% loss) | ✅ Best for spatial networks |
-| Barabási-Albert | Excellent (DDR=0.997) | Poor (6% removal → 50% loss) | ⚠️ Use only if attacks unlikely |
-| Erdős-Rényi | Good (DDR=0.991) | Moderate (32% removal → 50% loss) | ✅ Good baseline |
-| Hierarchical | Vulnerable (DDR=0.906) | Extremely Poor (3.3% removal → 50% loss) | ❌ Avoid for critical systems |
+| Network Model | Random Failures (Dynamic) | Energy Lifetime | Targeted Attacks (Static) | Recommendation |
+|---------------|---------------------------|-----------------|---------------------------|----------------|
+| Erdős-Rényi | Excellent (DDR=92.4%) | 3094 steps (best) | Moderate (32% removal → 50% loss) | ✅ Best overall balance |
+| Watts-Strogatz | Excellent (DDR=92.2%) | 2976 steps | Moderate (17% removal → 50% loss) | ✅ Best for high-reliability IoT |
+| Random Geometric | Excellent (DDR=92.9%) | 2783 steps | Moderate (16% removal → 50% loss) | ✅ Best for spatial networks |
+| Barabási-Albert | Good (DDR=88.8%) | 2101 steps ⚠️ | Poor (6% removal → 50% loss) | ⚠️ Avoid for critical/long-lived systems |
+| Hierarchical | Poor (DDR=56.9%) | 1388 steps ⚠️ | Extremely Poor (3.3% removal → 50% loss) | ❌ Requires major architectural changes |

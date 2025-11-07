@@ -71,8 +71,8 @@ def main():
     if args.steps is not None:
         cfg['steps'] = args.steps
 
-    timeseries_path = args.timeseries or cfg.get('timeseries_filename', 'dynamic_timeseries.csv')
-    summary_path = args.summary or cfg.get('summary_filename', 'dynamic_summary.csv')
+    timeseries_path = args.timeseries or cfg.get('timeseries_filename', 'csv/operational_simulation_timeseries.csv')
+    summary_path = args.summary or cfg.get('summary_filename', 'csv/operational_simulation_summary.csv')
 
     params = build_params(cfg, compute_ac=args.compute_ac)
     smoothing_window = int(cfg.get('ddr_smoothing_window', 1))
