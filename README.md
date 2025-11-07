@@ -13,6 +13,7 @@ To cover a broad set of structures and networks, several graph models are includ
 ### Current Configuration (config.py)
 
 **Simulation Parameters:**
+
 - Nodes: 300 per network
 - Runs: 150 per model/strategy
 - Dynamic steps: 3500 (captures energy depletion)
@@ -90,3 +91,9 @@ python -m models.model_visualizations.visualize_models
 # (Re-)generate interactive visualizations using pyvis
 python -m models.model_visualizations.interactive_visualizer
 ```
+
+## Results
+
+Result details can be found:
+
+- [Results](./RESULTS.md)
