@@ -92,8 +92,8 @@ python -m models.model_visualizations.visualize_models
 python -m models.model_visualizations.interactive_visualizer
 ```
 
-## Results
+---
 
-Result details can be found:
+## Results & Findings
 
-- [Results](./RESULTS.md)
+Comprehensive analysis of 5 network topologies under attack and operational scenarios. See [RESULTS.md](RESULTS.md) for full details.
