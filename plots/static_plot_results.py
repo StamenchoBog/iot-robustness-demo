@@ -7,16 +7,38 @@ import numpy as np
 from config import STATIC_SIMULATION_CONFIG
 
 class ResultsPlotter:
-    """Handles the visualization of simulation results from a DataFrame."""
+    """
+    Handles visualization of static attack simulation results.
+    
+    Processes raw simulation data to create comparison plots showing how
+    different network topologies degrade under various attack strategies.
+    
+    Features:
+        - Aggregates multiple runs (mean, 95% CI)
+        - Optional smoothing for cleaner visualization
+        - Multi-panel comparison across network models
+        - Customizable metrics (LCC, algebraic connectivity)
+    """
 
     def __init__(self, results_df: pd.DataFrame, metric_to_plot: str, show_ci: bool = False, smooth_window: int = 1):
+        """
+        Args:
+            results_df (pd.DataFrame): Raw simulation results
+            metric_to_plot (str): Metric column to visualize (e.g., 'lcc', 'algebraic_connectivity')
+            show_ci (bool): Whether to show 95% confidence intervals
+            smooth_window (int): Rolling window size for smoothing (1 = no smoothing)
+        """
         self.df = results_df.copy()
         self.metric = metric_to_plot
         self.show_ci = show_ci
         self.smooth_window = max(1, smooth_window)
+        
+        # Aggregate runs: compute mean and 95% CI for each (model, strategy, removal_fraction)
         grp = self.df.groupby(['model_name', 'attack_strategy', 'nodes_removed_fraction'])[self.metric]
         summary = grp.agg(['mean', 'count', 'std']).reset_index()
         summary['ci95'] = 1.96 * (summary['std'] / np.sqrt(summary['count'].clip(lower=1)))
+        
+        # Apply smoothing if requested
         if self.smooth_window > 1:
             summary = summary.sort_values('nodes_removed_fraction')
             summary['mean'] = summary.groupby(['model_name', 'attack_strategy'])['mean'].transform(
@@ -29,7 +51,20 @@ class ResultsPlotter:
         self.summary = summary
 
     def plot_comparison(self, save_plot=False, output_filename="resilience_comparison.png"):
-        """Creates a multi-plot figure for comparison."""
+        """
+        Creates multi-panel figure comparing network robustness under attacks.
+        
+        Layout:
+            - One panel per network model
+            - Each panel shows all attack strategies as separate lines
+            - X-axis: Fraction of nodes removed
+            - Y-axis: Metric value (LCC, algebraic connectivity, etc.)
+            - Optional: 95% CI shaded regions
+        
+        Args:
+            save_plot (bool): If True, save to file; if False, display
+            output_filename (str): Output filename (saved to plots/static_analysis_results/)
+        """
         models = self.summary['model_name'].unique()
         n_models = len(models)
 
@@ -37,6 +72,7 @@ class ResultsPlotter:
         fig, axes = plt.subplots(1, n_models, figsize=(7 * n_models, 6), sharey=False)
         if n_models == 1: axes = [axes]
 
+        # Different line styles for different attack strategies
         line_styles = {'random': '--', 'targeted_degree': '-', 'targeted_centrality': '-.'}
 
         for ax, model_name in zip(axes, models):

@@ -4,6 +4,19 @@ import math
 def generate_network(model_type, num_nodes, **params):
     """
     Generate a network based on the specified model type.
+    
+    Args:
+        model_type (str): Type of network model ('ER', 'BA', 'WS', 'RGG', 'HIER')
+        num_nodes (int): Number of nodes in the network
+        **params: Model-specific parameters
+            - ER: p (probability of edge creation)
+            - BA: m (number of edges to attach from new node)
+            - WS: k (each node connected to k nearest neighbors), p (rewiring probability)
+            - RGG: radius (distance threshold for edge creation)
+            - HIER: num_gateways, sensors_per_gateway
+    
+    Returns:
+        nx.Graph: Generated network graph
     """
     if model_type == 'ER':
         p = params.get('p', math.log(num_nodes) / num_nodes)
@@ -33,10 +46,23 @@ def generate_network(model_type, num_nodes, **params):
 
 def _generate_hierarchical_network(num_gateways=10, sensors_per_gateway=49):
     """
-    Generates a two-level hierarchical network with a single sink.
-    - Level 0: Sink node
-    - Level 1: Gateway nodes connected to the sink
-    - Level 2: Sensor nodes connected to their respective gateways
+    Generates a three-level hierarchical network topology for IoT systems.
+    
+    Structure:
+        - Level 0: Single sink node (central server)
+        - Level 1: Gateway nodes connected to sink and to each other in chain
+        - Level 2: Sensor nodes, each connected to one gateway
+    
+    Args:
+        num_gateways (int): Number of gateway nodes (default: 10)
+        sensors_per_gateway (int): Sensors per gateway (default: 49)
+    
+    Returns:
+        nx.Graph: Hierarchical network with node attributes:
+            - 'level': 0 (sink), 1 (gateway), or 2 (sensor)
+            - 'label': Node type descriptor
+    
+    Total nodes: 1 (sink) + num_gateways + (num_gateways * sensors_per_gateway)
     """
     G = nx.Graph()
 

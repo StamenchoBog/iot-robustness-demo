@@ -6,7 +6,17 @@ from typing import List, Dict
 def calculate_algebraic_connectivity(graph: nx.Graph) -> float:
     """
     Calculates the algebraic connectivity (Fiedler value) of the graph.
-    Returns 0 if the graph is not connected.
+    
+    Algebraic connectivity is the second smallest eigenvalue of the graph's
+    Laplacian matrix. It measures how well-connected the graph is:
+    - Higher values = better connectivity and robustness
+    - Value of 0 = disconnected graph
+    
+    Args:
+        graph (nx.Graph): Input graph to analyze
+    
+    Returns:
+        float: Algebraic connectivity value, or 0.0 if disconnected
     """
     if not nx.is_connected(graph):
         return 0.0
@@ -41,9 +51,25 @@ def calculate_signal_smoothness(graph: nx.Graph, signal: Dict) -> float:
 
 def simulate_attack(graph: nx.Graph, strategy: str) -> Dict[str, List[float]]:
     """
-    Simulates an attack, returning the evolution of multiple metrics.
-    Returns a dictionary containing lists for 'lcc' and 'algebraic_connectivity'.
-    Note: 'smoothness' has been removed as it requires domain-specific signal data.
+    Simulates sequential node removal attack on network, tracking degradation metrics.
+    
+    Process:
+        1. Determine removal order based on strategy
+        2. Record initial metrics
+        3. Remove nodes one by one
+        4. After each removal, measure LCC and algebraic connectivity
+    
+    Args:
+        graph (nx.Graph): Network to attack
+        strategy (str): Attack strategy - 'random', 'targeted_degree', or 'targeted_centrality'
+            - random: Random node removal order
+            - targeted_degree: Remove highest-degree nodes first
+            - targeted_centrality: Remove highest-betweenness nodes first
+    
+    Returns:
+        Dict[str, List[float]]: Dictionary with keys:
+            - 'lcc': List of LCC fractions (0-1) after each removal
+            - 'algebraic_connectivity': List of connectivity values after each removal
     """
     g = graph.copy()
     n_initial = len(g.nodes())

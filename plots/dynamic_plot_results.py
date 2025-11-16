@@ -10,6 +10,17 @@ from config import DYNAMIC_SIMULATION_CONFIG
 
 
 def ci95(series: pd.Series) -> float:
+    """
+    Calculates 95% confidence interval half-width for a sample.
+    
+    Uses t-distribution approximation: 1.96 * (std / sqrt(n))
+    
+    Args:
+        series (pd.Series): Sample data
+    
+    Returns:
+        float: Half-width of 95% CI
+    """
     n = series.count()
     if n <= 1:
         return 0.0
@@ -17,6 +28,18 @@ def ci95(series: pd.Series) -> float:
 
 
 def plot_timeseries(df: pd.DataFrame, metric: str, save: bool, output: str):
+    """
+    Creates time-series plots showing metric evolution over simulation steps.
+    
+    Visualizes how network health metrics (LCC, DDR, online fraction) change
+    over time for each topology. Shows mean across runs with 95% CI.
+    
+    Args:
+        df (pd.DataFrame): Timeseries data with 'time', 'model_name', and metric columns
+        metric (str): Column name to plot (e.g., 'lcc', 'ddr_cumulative', 'online_fraction')
+        save (bool): If True, save to file; if False, display
+        output (str): Output filename (saved to plots/dynamic_analysis_results/)
+    """
     if metric not in df.columns:
         raise ValueError(f"Metric '{metric}' not found in time series data. Available: {
                         list(df.columns)}")
@@ -68,6 +91,23 @@ def plot_timeseries(df: pd.DataFrame, metric: str, save: bool, output: str):
 
 
 def plot_summary(df: pd.DataFrame, metric: str, save: bool, output: str):
+    """
+    Creates bar chart comparing aggregate performance metrics across topologies.
+    
+    Visualizes summary statistics like:
+        - Time to first death (lower = worse)
+        - Time to LCC collapse (higher = better)
+        - Mean TTR (lower = better)
+        - Final DDR (higher = better)
+    
+    Uses color coding: green = good, orange = moderate, red = poor.
+    
+    Args:
+        df (pd.DataFrame): Summary data with 'model_name' and metric columns
+        metric (str): Metric to plot (e.g., 'ddr_final', 'time_to_first_death')
+        save (bool): If True, save to file; if False, display
+        output (str): Output filename (saved to plots/dynamic_analysis_results/)
+    """
     if metric not in df.columns:
         raise ValueError(f"Metric '{metric}' not found in summary data. Available: {list(df.columns)}")
 

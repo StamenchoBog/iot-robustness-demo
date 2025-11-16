@@ -14,6 +14,16 @@ from models.model_generator import generate_network
 
 
 def build_params(config: Dict[str, Any], compute_ac: bool) -> DynamicParams:
+    """
+    Constructs DynamicParams object from configuration dictionary.
+    
+    Args:
+        config (Dict): Configuration with simulation parameters
+        compute_ac (bool): Whether to compute algebraic connectivity (expensive)
+    
+    Returns:
+        DynamicParams: Structured parameters for dynamic simulation
+    """
     return DynamicParams(
         steps=config.get('steps', 1000),
         packet_rate=config.get('packet_rate', 1),
@@ -31,12 +41,39 @@ def build_params(config: Dict[str, Any], compute_ac: bool) -> DynamicParams:
 
 
 def rolling_mean(series: pd.Series, window: int) -> pd.Series:
+    """
+    Applies rolling window smoothing to time series data.
+    
+    Used for smoothing noisy DDR metrics to better visualize trends.
+    
+    Args:
+        series (pd.Series): Input time series
+        window (int): Window size for rolling mean
+    
+    Returns:
+        pd.Series: Smoothed series
+    """
     if window <= 1:
         return series
     return series.rolling(window, min_periods=1).mean()
 
 
 def maybe_flush(ts_buffer: List[pd.DataFrame], sm_buffer: List[Dict[str, Any]], ts_path: str, sm_path: str, force: bool, wrote_any: Dict[str, bool]):
+    """
+    Incrementally flushes timeseries and summary results to CSV files.
+    
+    Manages two output streams:
+        - Timeseries: Metrics per time step (large)
+        - Summary: Aggregate metrics per run (small)
+    
+    Args:
+        ts_buffer: List of timeseries DataFrames to write
+        sm_buffer: List of summary dictionaries to write
+        ts_path: Timeseries CSV file path
+        sm_path: Summary CSV file path
+        force: If True, flush even if buffers are small
+        wrote_any: Tracker for whether files were created (for append mode)
+    """
     if not force and not ts_buffer and not sm_buffer:
         return
     if ts_buffer:
