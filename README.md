@@ -96,4 +96,4 @@ python -m models.model_visualizations.interactive_visualizer
 
 ## Results & Findings
 
-Comprehensive analysis of 5 network topologies under attack and operational scenarios. See [RESULTS.md](RESULTS.md) for full details.
+Comprehensive analysis of 5 network topologies under attack and operational scenarios. See [REVIEW.md](REVIEW.md) for full details.
